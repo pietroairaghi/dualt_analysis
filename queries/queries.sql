@@ -1,7 +1,34 @@
+DROP FUNCTION IF EXISTS wordcount;
+DELIMITER $$
+CREATE OR REPLACE FUNCTION wordcount(str TEXT)
+            RETURNS INT
+            DETERMINISTIC
+            SQL SECURITY INVOKER
+            NO SQL
+       BEGIN
+         DECLARE wordCnt, idx, maxIdx INT DEFAULT 0;
+         DECLARE currChar, prevChar BOOL DEFAULT 0;
+         SET maxIdx=char_length(str);
+         WHILE idx < maxIdx DO
+             SET currChar=SUBSTRING(str, idx, 1) RLIKE '[[:alnum:]]';
+             IF NOT prevChar AND currChar THEN
+                 SET wordCnt=wordCnt+1;
+             END IF;
+             SET prevChar=currChar;
+             SET idx=idx+1;
+         END WHILE;
+         RETURN wordCnt;
+       END
+     $$
+
+DELIMITER ;
+
+
+
+
 -- N Activities per user
 CREATE OR REPLACE VIEW n_activities AS (
-	SELECT us_user, COUNT(ac_activity) as n_activities FROM users
-		NATURAL JOIN activities_users 
+	SELECT us_user, COUNT(ac_activity) as n_activities FROM activities_users 
 		NATURAL JOIN activities_versions
 		WHERE acv_type = 'final'
 		GROUP BY us_user
@@ -118,7 +145,7 @@ SELECT users.us_user as user_id,us_archived as archived,user_type,classes, compa
 	n_in_curriculum_semester1,n_in_curriculum_semester2,
 	n_in_curriculum_semester3,n_in_curriculum_semester4,n_in_curriculum_semester5,
 	n_feedback_requests,n_received_feedback_responses,n_received_feedback_requests,n_feedback_responses,
-	avg_activity_evaluations, avg_reflection_length, avg_specific_evaluations
+	avg_activity_evaluations, avg_reflection_length, avg_specific_evaluations,
 	n_files,n_folders
 FROM `users` 
 
@@ -168,6 +195,21 @@ FROM `users`
 	) as T_folders
 	
 WHERE users.us_user>20 ;
+
+
+-- N activities per month per user
+SELECT us_user, MONTH(ac_date) AS month, STD(DAY(ac_date)) AS day_std, COUNT(ac_activity) AS n_activities FROM activities_users 
+	NATURAL JOIN activities_versions
+	NATURAL JOIN activities
+	WHERE acv_type = 'final'
+	GROUP BY us_user, MONTH(ac_date)
+
+
+
+
+
+
+
 
 
 
