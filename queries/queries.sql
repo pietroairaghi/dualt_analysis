@@ -224,39 +224,98 @@ SELECT us_user, MONTH(ac_date) AS month, STD(DAY(ac_date)) AS day_std, COUNT(ac_
 
 -- STEPS info BY ACTIVITY
 CREATE OR REPLACE VIEW activity_steps_info AS (
-	SELECT st_idStep, ac_activity, ROUND(AVG(LENGTH(st_description))) AS avg_step_len, COUNT(*) AS n_steps 
-	FROM steps 
-		WHERE LENGTH(st_description) > 0 GROUP BY ac_activity
+	SELECT st_idStep, ac_activity, 
+		ROUND(AVG(wordcount(st_description))) AS avg_step_len, 
+		SUM(wordcount(st_description)) as len_steps,
+		COUNT(*) AS n_steps 
+		FROM steps 
+			WHERE LENGTH(st_description) > 0 
+		GROUP BY ac_activity
 );
 
 
 -- ACTIVITIES INFO
-SELECT ac_activity AS activity_id, us_user AS user_id, at_activityType, LENGTH(ac_description) AS len_description, 
-		ac_atSchool, ac_atInteraziendale, (1-ac_atSchool-ac_atInteraziendale) AS ac_atCompany, avg_step_len, n_steps,
-		au_evaluation AS user_evaluation, start_date, ac_date AS end_date, (start_date-ac_date) AS edit_period,
-		avg_specific_evaluations, avg_reflection_length, in_curriculum
-FROM `activities` NATURAL JOIN activities_versions NATURAL JOIN activities_users
+DROP TABLE IF EXISTS V_activities_info;
+CREATE TABLE V_activities_info AS (
+	SELECT ac_activity AS activity_id, us_user AS user_id, at_activityType, wordcount(ac_description) AS len_description, 
+			wordcount(ac_observations) AS len_observations,
+			ac_atSchool, ac_atInteraziendale, (1-ac_atSchool-ac_atInteraziendale) AS ac_atCompany, 
+			len_steps, avg_step_len, STD(single_step_len) AS std_step_len, n_steps,
+			au_evaluation AS user_evaluation, start_date, ac_date AS end_date, DATEDIFF(ac_date,start_date) AS edit_period,
+			avg_specific_evaluations, avg_reflection_length, STD(single_reflection_length) AS std_reflection_length, in_curriculum,
+			len_bilancio, len_competenze, len_miglioramenti, len_critici, 
+			(wordcount(ac_description)+len_steps+wordcount(ac_observations)) AS activity_total_length,
+			n_edits
+	FROM `activities` NATURAL JOIN activities_versions NATURAL JOIN activities_users
 
-	NATURAL LEFT JOIN (
-		SELECT ac_activity_ref AS ac_activity, MIN(ac_date) AS start_date FROM activities_versions NATURAL JOIN activities WHERE acv_type = 'autosave' GROUP BY ac_activity_ref
-	) AS T_start_date
-	
-	NATURAL LEFT JOIN (
-		SELECT ac_activity, us_user, ROUND(AVG(LENGTH(ref_reflection))) AS avg_reflection_length, AVG(ref_evaluation) AS avg_specific_evaluations FROM reflections GROUP BY ac_activity,us_user
-	) AS T_n_reflections
-	
-	NATURAL LEFT JOIN(
-		SELECT ac_activity, COUNT(fi_file) AS n_images FROM files_steps NATURAL JOIN steps GROUP BY ac_activity
-	) AS T_n_files
-	
-	NATURAL LEFT JOIN(
-		SELECT ac_activity, atcl_classificationType, 1 AS in_curriculum FROM activities NATURAL LEFT JOIN activities_classification
-			WHERE atcl_classificationType = 'inCurriculum'
-	) AS T_check_curriculum
+		NATURAL LEFT JOIN (
+			SELECT ac_activity, MIN(data) AS start_date FROM log_activities WHERE operazione = 'I' GROUP BY ac_activity
+		) AS T_start_date
+		
+		NATURAL LEFT JOIN(
+			SELECT ac_activity, COUNT(*) AS n_edits FROM log_activities WHERE operazione = 'U' GROUP BY ac_activity
+		) AS T_edits
+		
+		NATURAL LEFT JOIN (
+			SELECT 
+				ac_activity, us_user,
+				ROUND(AVG(wordcount(ref_reflection))) AS avg_reflection_length, 
+				ROUND(AVG(ref_evaluation),2) AS avg_specific_evaluations, 
+				len_bilancio, len_competenze, len_miglioramenti, len_critici 
+				
+				
+				FROM reflections 
+				
+					NATURAL LEFT JOIN(
+						SELECT ac_activity, us_user, wordcount(ref_reflection) AS len_bilancio
+							FROM reflections WHERE rf_field = 'bilancio_apprendimenti'
+						GROUP BY ac_activity,us_user
+					) AS T_len_bilancio
+					NATURAL LEFT JOIN(
+						SELECT ac_activity, us_user, wordcount(ref_reflection)  AS len_competenze
+							FROM reflections WHERE rf_field = 'documentazione_competenze'
+						GROUP BY ac_activity,us_user
+					) AS T_len_competenze
+					NATURAL LEFT JOIN(
+						SELECT ac_activity, us_user, wordcount(ref_reflection)  AS len_miglioramenti
+							FROM reflections WHERE rf_field = 'miglioramenti'
+						GROUP BY ac_activity,us_user
+					) AS T_len_miglioramenti
+					NATURAL LEFT JOIN(
+						SELECT ac_activity, us_user, wordcount(ref_reflection)  AS len_critici
+							FROM reflections WHERE rf_field = 'punti_critici'
+						GROUP BY ac_activity,us_user
+					) AS T_len_critici
+				
+				GROUP BY ac_activity,us_user
+		) AS T_n_reflections
+		
+		NATURAL LEFT JOIN (
+			SELECT ac_activity, us_user, wordcount(ref_reflection) AS single_reflection_length 
+				FROM reflections 
+		) AS T_for_std_reflections
+		
+		NATURAL LEFT JOIN (
+			SELECT st_idStep, ac_activity, wordcount(st_description) AS single_step_len 
+				FROM steps 
+					WHERE LENGTH(st_description) > 0
+		) AS T_for_std_steps
+		
+		NATURAL LEFT JOIN(
+			SELECT ac_activity, COUNT(fi_file) AS n_images FROM files_steps NATURAL JOIN steps GROUP BY ac_activity
+		) AS T_n_files
+		
+		NATURAL LEFT JOIN(
+			SELECT ac_activity, atcl_classificationType, 1 AS in_curriculum FROM activities NATURAL LEFT JOIN activities_classification
+				WHERE atcl_classificationType = 'inCurriculum'
+		) AS T_check_curriculum
 
-	NATURAL LEFT JOIN activity_steps_info
-	
-WHERE acv_type = 'final';
+		NATURAL LEFT JOIN activity_steps_info
+		
+	WHERE acv_type = 'final'
+
+	GROUP BY ac_activity
+);
 
 
 
