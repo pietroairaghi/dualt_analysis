@@ -47,31 +47,14 @@ VALUES
     (12,3);
 	
 
-CREATE OR REPLACE VIEW users_start_semester AS (
-	SELECT us_user, 
-		(CASE 
-			WHEN MONTH(MIN(date)) < '9' THEN STR_TO_DATE(CONCAT(YEAR(MIN(date))-1,'-09-01'), '%Y-%m-%d') 
-			ELSE STR_TO_DATE(CONCAT(YEAR(MIN(date)),'-09-01'), '%Y-%m-%d')
-		END) AS start_semester,
-		(CASE 
-			WHEN MONTH(MIN(date)) < '9' THEN YEAR(MIN(date))-1
-			ELSE YEAR(MIN(date))
-		END) AS start_year
-	FROM log_logins NATURAL JOIN users GROUP BY us_user
-);
 
-
-CREATE OR REPLACE VIEW activities_users_school_year AS (
-	SELECT *, ABS(TIMESTAMPDIFF(year,ac_date, start_semester))+1 AS activity_school_year FROM `activities` 
-		NATURAL JOIN activities_users 
-		NATURAL JOIN users_start_semester
-);
 
 
 
 CREATE OR REPLACE VIEW logins_users_school_year AS (
 	SELECT *, ABS(TIMESTAMPDIFF(year,date, start_semester))+1 AS user_school_year ,
-			MONTH(date) as month, DAYOFWEEK(date) AS dayofweek,
+			YEAR(date) as year, 
+			MONTH(date) as month, DAY(date) as day, DAYOFWEEK(date) AS dayofweek,
 			LPAD(HOUR(date),2,'0') AS hour, LPAD(MINUTE(date),2,'0') AS minute
 		FROM `LOG_logins` 
 			NATURAL JOIN users_start_semester
@@ -84,7 +67,7 @@ CREATE OR REPLACE VIEW logins_per_month AS (
 				NATURAL JOIN users
 				NATURAL JOIN users_usertypes
 			
-			WHERE ut_user_type = 'studente'
+			WHERE ut_user_type = 'formatore'
 			
 		GROUP BY month, user_school_year 
 		#GROUP BY start_year, month, user_school_year 
@@ -92,7 +75,7 @@ CREATE OR REPLACE VIEW logins_per_month AS (
 
 -- number of activities per month
 CREATE OR REPLACE VIEW activities_per_month_per_user AS (
-	SELECT MONTH(ac_date) AS month, activity_school_year, start_year, us_user, COUNT(*) AS n_user_activities, 
+	SELECT MONTH(ac_date) AS month, activity_school_year, us_user, COUNT(*) AS n_user_activities, 
 			SUM(at_activityType = 'recipe') AS n_user_recipes, 
 			SUM(at_activityType = 'experience') AS n_user_experiences 
 		FROM activities_users_school_year
@@ -101,7 +84,7 @@ CREATE OR REPLACE VIEW activities_per_month_per_user AS (
 
 -- number of edits per month
 CREATE OR REPLACE VIEW activitiy_edits_per_month AS (
-	SELECT MONTH(data) AS month, activity_school_year, start_year, COUNT(*) AS n_edits 
+	SELECT MONTH(data) AS month, activity_school_year, COUNT(*) AS n_edits 
 	
 		FROM LOG_activities 
 			NATURAL JOIN activities_users_school_year
@@ -118,7 +101,7 @@ SELECT MONTH(ac_date) AS month, activity_school_year, COUNT(*) AS n_files FROM f
 -- + recipes and experiences
 DROP TABLE IF EXISTS V_months_activities_files;
 CREATE TABLE V_months_activities_files AS (
-	SELECT MONTH(ac_date) AS month, activity_school_year, start_year, COUNT(*) AS n_files, 
+	SELECT MONTH(ac_date) AS month, activity_school_year, COUNT(*) AS n_files, 
 		SUM(at_activityType = 'recipe') AS n_files_recipes, 
 		SUM(at_activityType = 'experience') AS n_files_experiences,
 		ROUND(AVG(n_images)) AS avg_n_files,
@@ -147,7 +130,7 @@ CREATE TABLE V_months_activities_files AS (
 -- recipes with feedbacks 
 DROP TABLE IF EXISTS V_months_feedbacks;
 CREATE TABLE V_months_feedbacks AS (
-	SELECT MONTH(ac_date) AS month, activity_school_year, start_year, 
+	SELECT MONTH(ac_date) AS month, activity_school_year, 
 		SUM(has_feedback_request = 1) as n_feedback_requests, SUM(has_feedback_response = 1) as n_feedback_responses,
 		SUM(at_activityType = 'recipe' AND has_feedback_request  = 1) AS n_feedback_requests_recipes, 
 		SUM(at_activityType = 'recipe' AND has_feedback_response = 1) AS n_feedback_responses_recipes, 
@@ -155,18 +138,18 @@ CREATE TABLE V_months_feedbacks AS (
 		SUM(at_activityType = 'experience' AND has_feedback_response = 1) AS n_feedback_responses_experiences 
 		
 		FROM activities_users_school_year
-			NATURAL JOIN (
-				SELECT no_idObject as ac_activity, no_timestamp, 1 AS has_feedback_request
-					FROM notifications 
-						WHERE no_type = 'feedback request'
-					GROUP BY no_idObject
-			) AS T_request
 			NATURAL LEFT JOIN (
-				SELECT no_idObject as ac_activity, no_timestamp, 1 AS has_feedback_response
+				SELECT no_idObject as ac_activity, 1 AS has_feedback_response
 					FROM notifications 
 						WHERE no_type = 'feedback response'
 					GROUP BY no_idObject
 			) AS T_respose
+			NATURAL LEFT JOIN (
+				SELECT no_idObject as ac_activity, 1 AS has_feedback_request
+					FROM notifications 
+						WHERE no_type = 'feedback request'
+					GROUP BY no_idObject
+			) AS T_request
 		GROUP BY MONTH(ac_date), activity_school_year
 		#GROUP BY start_year, MONTH(ac_date), activity_school_year
 );
@@ -174,7 +157,7 @@ CREATE TABLE V_months_feedbacks AS (
 -- Total length of recipes description: average + SD / per month
 DROP TABLE IF EXISTS len_info_per_months;
 CREATE TABLE len_info_per_months AS (
-	SELECT MONTH(ac_date) AS month, activity_school_year, start_year, 
+	SELECT MONTH(ac_date) AS month, activity_school_year, 
 		ROUND(AVG(activity_total_length)) AS avg_activity_total_length,
 		ROUND(STD(activity_total_length),2) AS std_activity_total_length,
 		ROUND(AVG(len_description)) AS avg_len_descriptions,
@@ -182,33 +165,67 @@ CREATE TABLE len_info_per_months AS (
 		ROUND(AVG(len_steps)) AS avg_len_steps,
 		ROUND(STD(len_steps),2) AS std_len_steps,
 		ROUND(AVG(len_observations)) AS avg_len_observations,
-		ROUND(STD(len_observations),2) AS std_len_observations,
-		ROUND(AVG(avg_reflection_length)) AS avg_avg_len_reflections,
-		ROUND(STD(avg_reflection_length),2) AS std_avg_len_reflections,
-		ROUND(AVG(len_bilancio)) AS avg_len_bilancio,
-		ROUND(STD(len_bilancio),2) AS std_len_bilancio,
-		ROUND(AVG(len_competenze)) AS avg_len_competenze,
-		ROUND(STD(len_competenze),2) AS std_len_competenze,
-		ROUND(AVG(len_miglioramenti)) AS avg_len_miglioramenti,
-		ROUND(STD(len_miglioramenti),2) AS std_len_miglioramenti,
-		ROUND(AVG(len_critici)) AS avg_len_critici,
-		ROUND(STD(len_critici),2) AS std_len_critici
+		ROUND(STD(len_observations),2) AS std_len_observations
 		
 	FROM activities_users_school_year
 		NATURAL LEFT JOIN V_activities_info -- see queries.sql
 		NATURAL JOIN users_usertypes
 		
+		WHERE ut_user_type = 'formatore'
+		
 		GROUP BY MONTH(ac_date), activity_school_year
 		#GROUP BY start_year, MONTH(ac_date), activity_school_year
 );
 
+-- Total length of recipes reflections: average + SD / per month
+DROP TABLE IF EXISTS reflection_len_info_per_months;
+CREATE TABLE reflection_len_info_per_months AS (
+		SELECT MONTH(ac_date) AS month, activity_school_year, 
+		ROUND(AVG((len_bilancio+len_competenze+len_miglioramenti+len_critici)/4),2) AS avg_sum_len_reflections,
+		ROUND(STD((len_bilancio+len_competenze+len_miglioramenti+len_critici)/4),2) AS std_avg_sum_len_reflections,
+		ROUND(AVG(avg_reflection_length),2) AS avg_avg_len_reflections,
+		ROUND(STD(avg_reflection_length),2) AS std_avg_len_reflections,
+		ROUND(AVG(len_bilancio),2) AS avg_len_bilancio,
+		ROUND(STD(len_bilancio),2) AS std_len_bilancio,
+		ROUND(AVG(len_competenze),2) AS avg_len_competenze,
+		ROUND(STD(len_competenze),2) AS std_len_competenze,
+		ROUND(AVG(len_miglioramenti),2) AS avg_len_miglioramenti,
+		ROUND(STD(len_miglioramenti),2) AS std_len_miglioramenti,
+		ROUND(AVG(len_critici),2) AS avg_len_critici,
+		ROUND(STD(len_critici),2) AS std_len_critici
+		
+	FROM V_all_activities_users NATURAL LEFT JOIN activities 
+		NATURAL LEFT JOIN (SELECT ac_activity,len_bilancio,len_competenze,len_miglioramenti,len_critici,avg_reflection_length FROM V_activities_info WHERE avg_reflection_length > 0 OR avg_reflection_length IS NOT NULL) AS T_activities_info -- see queries.sql
+		NATURAL JOIN users_usertypes
+		
+		WHERE ut_user_type = 'formatore'
+		
+		GROUP BY MONTH(ac_date), activity_school_year
+		#GROUP BY start_year, MONTH(ac_date), activity_school_year
+);
+
+
 CREATE OR REPLACE VIEW all_months_and_years_per_year AS (
-	SELECT month, activity_school_year FROM all_months_and_years LEFT JOIN (SELECT user_school_year, COUNT(*) AS n_users_per_year 
+	SELECT month, activity_school_year, n_users_per_year FROM all_months_and_years LEFT JOIN (SELECT user_school_year, COUNT(*) AS n_users_per_year 
 		FROM (
-			SELECT * FROM `logins_users_school_year` NATURAL JOIN users_userTypes WHERE ut_user_type = 'studente' GROUP BY us_user, user_school_year
+			SELECT * FROM `logins_users_school_year` NATURAL JOIN users_userTypes WHERE ut_user_type = 'formatore' GROUP BY us_user, user_school_year
 		) AS T_logins
 		GROUP BY user_school_year) AS T_logins_per_years
 		ON all_months_and_years.activity_school_year = T_logins_per_years.user_school_year
+);
+
+DROP TABLE IF EXISTS info_lengths;
+CREATE TABLE info_lengths AS (
+	SELECT MONTH(end_date) AS month, activity_school_year,
+		COUNT(CASE WHEN avg_reflection_length > 0 THEN 1 END) AS total_reflections, 
+		COUNT(CASE WHEN (avg_reflection_length = 0 OR avg_reflection_length IS NULL) THEN 1 END) AS total_null_reflections
+		
+	FROM V_activities_info -- see queries.sql
+		NATURAL JOIN users_usertypes
+		
+		WHERE ut_user_type = 'formatore'
+		
+		GROUP BY MONTH(end_date), activity_school_year
 );
 
 DROP TABLE IF EXISTS V_months_info;
@@ -268,6 +285,9 @@ CREATE TABLE V_months_info AS (
 			) AS T_real_date_curriculum
 			
 			NATURAL LEFT JOIN len_info_per_months
+			NATURAL LEFT JOIN reflection_len_info_per_months
+			NATURAL LEFT JOIN info_lengths
+			
 			NATURAL LEFT JOIN activitiy_edits_per_month
 			
 		ORDER BY month, activity_school_year

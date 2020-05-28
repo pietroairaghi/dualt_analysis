@@ -17,6 +17,7 @@ class BaseChart():
     chartID   = "chart"
     js        = "var params = {};"
     title     = None
+    legend    = True
     
     def __init__(self,height=500, data = None, title=None):
         self.chartID = f"chartdiv_{str(uuid.uuid1())}"
@@ -28,6 +29,9 @@ class BaseChart():
         
     def setTitle(self,title):
         self.title = title
+        
+    def showLegend(self,enable=True):
+        self.legend = enable
     
     def setHeight(self, height):
         self.height = height
@@ -46,6 +50,15 @@ class BaseChart():
         if self.title:
             self.js += '''
         params['title'] = "'''+str(self.title)+'''";
+            '''
+        
+        if self.legend:
+            self.js += '''
+        params['legend'] = true;
+            '''
+        else:
+            self.js += '''
+        params['legend'] = false;
             '''
         
         self.js += '''
@@ -250,10 +263,15 @@ class Amchart():
         function columnCallback(params,canvasID){
             
             return function(am4core, am4charts, am4themes_animated) {
-            
+                
+                var legend = params['legend'];
                 var data   = params['data'];
                 var series = params['series'];
                 var cTitle = params['title'];
+                
+                if(legend === undefined){
+                    legend = true;
+                }
                 
                 /* Chart code */
                 // Themes begin
@@ -272,13 +290,15 @@ class Amchart():
                     title.fontSize = 18;
                     title.marginBottom = 10;
                 }
-
-                chart.legend = new am4charts.Legend()
-                chart.legend.position = 'bottom'
-                chart.legend.paddingBottom = 20
-                chart.legend.maxWidth = undefined;
-                chart.legend.valueLabels.template.align = "center";
-                chart.legend.valueLabels.template.textAlign = "center"; 
+                
+                if(legend){
+                    chart.legend = new am4charts.Legend()
+                    chart.legend.position = 'bottom'
+                    chart.legend.paddingBottom = 20
+                    chart.legend.maxWidth = undefined;
+                    chart.legend.valueLabels.template.align = "center";
+                    chart.legend.valueLabels.template.textAlign = "center"; 
+                }
 
                 let xAxis = chart.xAxes.push(new am4charts.CategoryAxis())
                 xAxis.dataFields.category = 'x'

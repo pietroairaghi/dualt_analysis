@@ -139,62 +139,66 @@ CREATE OR REPLACE VIEW n_received_feedback AS (
 	SELECT USERS, USER TYPE (CSV), CLASSESS (CSV), COMPANIES (CSV), 
 		N_ACTIVITIES, N_RECIPES, N_EXPERIENCES, N_REFLECTIONS (ALL, RECIPES, EXPERIENCES), N_CURRICULUM.*
 */
-SELECT users.us_user as user_id,us_archived as archived,user_type,classes, companies 
-	n_activities, n_recipes, n_experiences, n_reflections, n_recipe_reflections, n_experience_reflections,
-	n_in_curriculum,n_recipes_in_curriculum,n_experiences_in_curriculum, 
-	n_in_curriculum_semester1,n_in_curriculum_semester2,
-	n_in_curriculum_semester3,n_in_curriculum_semester4,n_in_curriculum_semester5,
-	n_feedback_requests,n_received_feedback_responses,n_received_feedback_requests,n_feedback_responses,
-	avg_activity_evaluations, avg_reflection_length, avg_specific_evaluations,
-	n_files,n_folders
-FROM `users` 
 
-	NATURAL JOIN (
-		SELECT us_user, GROUP_CONCAT(ut_user_type) as user_type FROM users_userTypes GROUP BY us_user
-	) AS T_user_types
-	
-	NATURAL LEFT JOIN (
-		SELECT us_user, GROUP_CONCAT(cl_class) as classes FROM `users_classes` GROUP BY us_user
-	) AS T_classes
-	
-	NATURAL LEFT JOIN (
-		SELECT us_user, GROUP_CONCAT(DISTINCT co_company) as companies FROM bosses GROUP BY us_user
-	) AS T_companies
-	
-	NATURAL LEFT JOIN (
-		SELECT us_user, COUNT(*) as total_logins FROM LOG_logins GROUP BY us_user
-	) AS T_logins
-	
-	NATURAL LEFT JOIN(
-		SELECT us_user, ROUND(AVG(LENGTH(ref_reflection))) AS avg_reflection_length, AVG(ref_evaluation) AS avg_specific_evaluations FROM reflections GROUP BY us_user
-	) AS T_reflection_details
-	
-	NATURAL LEFT JOIN(
-		SELECT us_user, AVG(au_evaluation) AS avg_activity_evaluations FROM activities_users GROUP BY us_user
-	) AS T_avg_activity_evals
-	
-	NATURAL LEFT JOIN n_activities
-	NATURAL LEFT JOIN n_recipes
-	NATURAL LEFT JOIN n_experiences
-	NATURAL LEFT JOIN n_reflections
-	NATURAL LEFT JOIN n_recipe_reflections
-	NATURAL LEFT JOIN n_experience_reflections
-	NATURAL LEFT JOIN n_in_curriculum
-	NATURAL LEFT JOIN n_recipes_in_curriculum
-	NATURAL LEFT JOIN n_experiences_in_curriculum
-	NATURAL LEFT JOIN n_in_curriculum_semester
-	NATURAL LEFT JOIN n_sent_feedback
-	NATURAL LEFT JOIN n_received_feedback
-	
-	NATURAL LEFT JOIN (
-		SELECT us_user, COUNT(us_user) AS n_files FROM files GROUP BY us_user
-	) as T_files
-	
-	NATURAL LEFT JOIN (
-		SELECT us_user, COUNT(us_user) AS n_folders FROM packs_users GROUP BY us_user
-	) as T_folders
-	
-WHERE users.us_user>20 ;
+DROP TABLE IF EXISTS V_user_info;
+CREATE TABLE V_user_info AS (
+	SELECT users.us_user as user_id,us_archived as archived,user_type,classes, companies 
+		n_activities, n_recipes, n_experiences, n_reflections, n_recipe_reflections, n_experience_reflections,
+		n_in_curriculum,n_recipes_in_curriculum,n_experiences_in_curriculum, 
+		n_in_curriculum_semester1,n_in_curriculum_semester2,
+		n_in_curriculum_semester3,n_in_curriculum_semester4,n_in_curriculum_semester5,
+		n_feedback_requests,n_received_feedback_responses,n_received_feedback_requests,n_feedback_responses,
+		avg_activity_evaluations, avg_reflection_length, avg_specific_evaluations,
+		n_files,n_folders
+	FROM `users` 
+
+		NATURAL JOIN (
+			SELECT us_user, GROUP_CONCAT(ut_user_type) as user_type FROM users_userTypes GROUP BY us_user
+		) AS T_user_types
+		
+		NATURAL LEFT JOIN (
+			SELECT us_user, GROUP_CONCAT(cl_class) as classes FROM `users_classes` GROUP BY us_user
+		) AS T_classes
+		
+		NATURAL LEFT JOIN (
+			SELECT us_user, GROUP_CONCAT(DISTINCT co_company) as companies FROM bosses GROUP BY us_user
+		) AS T_companies
+		
+		NATURAL LEFT JOIN (
+			SELECT us_user, COUNT(*) as total_logins FROM LOG_logins GROUP BY us_user
+		) AS T_logins
+		
+		NATURAL LEFT JOIN(
+			SELECT us_user, ROUND(AVG(LENGTH(ref_reflection))) AS avg_reflection_length, AVG(ref_evaluation) AS avg_specific_evaluations FROM reflections GROUP BY us_user
+		) AS T_reflection_details
+		
+		NATURAL LEFT JOIN(
+			SELECT us_user, AVG(au_evaluation) AS avg_activity_evaluations FROM activities_users GROUP BY us_user
+		) AS T_avg_activity_evals
+		
+		NATURAL LEFT JOIN n_activities
+		NATURAL LEFT JOIN n_recipes
+		NATURAL LEFT JOIN n_experiences
+		NATURAL LEFT JOIN n_reflections
+		NATURAL LEFT JOIN n_recipe_reflections
+		NATURAL LEFT JOIN n_experience_reflections
+		NATURAL LEFT JOIN n_in_curriculum
+		NATURAL LEFT JOIN n_recipes_in_curriculum
+		NATURAL LEFT JOIN n_experiences_in_curriculum
+		NATURAL LEFT JOIN n_in_curriculum_semester
+		NATURAL LEFT JOIN n_sent_feedback
+		NATURAL LEFT JOIN n_received_feedback
+		
+		NATURAL LEFT JOIN (
+			SELECT us_user, COUNT(us_user) AS n_files FROM files GROUP BY us_user
+		) as T_files
+		
+		NATURAL LEFT JOIN (
+			SELECT us_user, COUNT(us_user) AS n_folders FROM packs_users GROUP BY us_user
+		) as T_folders
+		
+	WHERE users.us_user>20
+);
 
 
 -- N activities per month per user
@@ -320,17 +324,50 @@ CREATE TABLE V_activities_word_count AS (
 ALTER TABLE `V_activities_word_count` ADD PRIMARY KEY(`ac_activity`);
 
 
+CREATE OR REPLACE VIEW users_start_semester AS (
+	SELECT us_user, 
+		(CASE 
+			WHEN MONTH(MIN(date)) < '9' THEN STR_TO_DATE(CONCAT(YEAR(MIN(date))-1,'-09-01'), '%Y-%m-%d') 
+			ELSE STR_TO_DATE(CONCAT(YEAR(MIN(date)),'-09-01'), '%Y-%m-%d')
+		END) AS start_semester,
+		(CASE 
+			WHEN MONTH(MIN(date)) < '9' THEN YEAR(MIN(date))-1
+			ELSE YEAR(MIN(date))
+		END) AS start_year
+	FROM log_logins NATURAL JOIN users GROUP BY us_user
+);
+
+
+CREATE OR REPLACE VIEW activities_users_school_year AS (
+	SELECT *, ABS(TIMESTAMPDIFF(year,ac_date, start_semester))+1 AS activity_school_year FROM `activities` 
+		NATURAL JOIN activities_users 
+		NATURAL LEFT JOIN users_start_semester
+);
+
+
 DROP TABLE IF EXISTS V_all_activities_users;
 CREATE TABLE V_all_activities_users AS (
-	SELECT ac_activity, us_user FROM reflections NATURAL LEFT JOIN activities UNION SELECT ac_activity, us_user FROM reflections NATURAL RIGHT JOIN activities
+	SELECT t1.ac_activity, activity_school_year, t2.us_user FROM `activities_users_school_year` AS t1 LEFT JOIN (SELECT * FROM reflections GROUP BY ac_activity,us_user) AS t2 ON t1.ac_activity = t2.ac_activity
 );
 ALTER TABLE `V_all_activities_users` ADD PRIMARY KEY( `ac_activity`, `us_user`);
+
+UPDATE V_tmp_all_activities_users b, activities_users_school_year p
+   SET b.us_user = p.us_user
+ WHERE b.ac_activity = p.ac_activity
+   AND b.us_user IS NULL;
+
+
+--DROP TABLE IF EXISTS V_all_activities_users;
+--CREATE TABLE V_all_activities_users AS (
+--	SELECT ac_activity, us_user, activity_school_year FROM reflections NATURAL LEFT JOIN (SELECT ac_activity, us_user, activity_school_year FROM `activities_users_school_year`) AS t1 UNION SELECT ac_activity, us_user, activity_school_year FROM reflections NATURAL RIGHT JOIN (SELECT ac_activity, us_user, activity_school_year FROM `activities_users_school_year`) AS t2
+--);
+--ALTER TABLE `V_all_activities_users` ADD PRIMARY KEY( `ac_activity`, `us_user`);
 
 
 -- ACTIVITIES INFO
 DROP TABLE IF EXISTS V_activities_info;
 CREATE TABLE V_activities_info AS (
-	SELECT ac_activity, us_user, at_activityType, len_description, len_observations,
+	SELECT ac_activity, us_user, at_activityType, len_description, len_observations, activity_school_year, 
 			ac_atSchool, ac_atInteraziendale, (1-ac_atSchool-ac_atInteraziendale) AS ac_atCompany, 
 			len_steps, avg_step_len, STD(single_step_len) AS std_step_len, n_steps,
 			au_evaluation AS user_evaluation, start_date, ac_date AS end_date, DATEDIFF(ac_date,start_date) AS edit_period,
