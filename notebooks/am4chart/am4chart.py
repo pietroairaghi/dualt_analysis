@@ -80,7 +80,7 @@ class Amchart():
         self.charts[chartID] = chart
         return self.charts[chartID]
 
-    def lineChart(self):
+    def LineChart(self):
         chart = LineChart()
         chartID = chart.chartID
 

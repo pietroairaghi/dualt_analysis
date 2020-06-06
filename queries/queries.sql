@@ -142,7 +142,7 @@ CREATE OR REPLACE VIEW n_received_feedback AS (
 
 DROP TABLE IF EXISTS V_user_info;
 CREATE TABLE V_user_info AS (
-	SELECT users.us_user as user_id,us_archived as archived,user_type,classes, companies 
+	SELECT users.us_user as user_id, CONCAT(us_first_name,' ',us_last_name) AS user_name, us_archived as archived,user_type,classes, companies, 
 		n_activities, n_recipes, n_experiences, n_reflections, n_recipe_reflections, n_experience_reflections,
 		n_in_curriculum,n_recipes_in_curriculum,n_experiences_in_curriculum, 
 		n_in_curriculum_semester1,n_in_curriculum_semester2,
@@ -151,6 +151,8 @@ CREATE TABLE V_user_info AS (
 		avg_activity_evaluations, avg_reflection_length, avg_specific_evaluations,
 		n_files,n_folders
 	FROM `users` 
+	
+		NATURAL JOIN users_start_semester
 
 		NATURAL JOIN (
 			SELECT us_user, GROUP_CONCAT(ut_user_type) as user_type FROM users_userTypes GROUP BY us_user
@@ -327,11 +329,11 @@ ALTER TABLE `V_activities_word_count` ADD PRIMARY KEY(`ac_activity`);
 CREATE OR REPLACE VIEW users_start_semester AS (
 	SELECT us_user, 
 		(CASE 
-			WHEN MONTH(MIN(date)) < '9' THEN STR_TO_DATE(CONCAT(YEAR(MIN(date))-1,'-09-01'), '%Y-%m-%d') 
-			ELSE STR_TO_DATE(CONCAT(YEAR(MIN(date)),'-09-01'), '%Y-%m-%d')
+			WHEN MONTH(MIN(date)) < '8' THEN STR_TO_DATE(CONCAT(YEAR(MIN(date))-1,'-09-01'), '%Y-%m-%d') 
+			ELSE STR_TO_DATE(CONCAT(YEAR(MIN(date)),'-08-01'), '%Y-%m-%d')
 		END) AS start_semester,
 		(CASE 
-			WHEN MONTH(MIN(date)) < '9' THEN YEAR(MIN(date))-1
+			WHEN MONTH(MIN(date)) < '8' THEN YEAR(MIN(date))-1
 			ELSE YEAR(MIN(date))
 		END) AS start_year
 	FROM log_logins NATURAL JOIN users GROUP BY us_user
@@ -347,7 +349,7 @@ CREATE OR REPLACE VIEW activities_users_school_year AS (
 
 DROP TABLE IF EXISTS V_all_activities_users;
 CREATE TABLE V_all_activities_users AS (
-	SELECT t1.ac_activity, activity_school_year, t2.us_user FROM `activities_users_school_year` AS t1 LEFT JOIN (SELECT * FROM reflections GROUP BY ac_activity,us_user) AS t2 ON t1.ac_activity = t2.ac_activity
+	SELECT t1.ac_activity, activity_school_year, start_year, t2.us_user FROM `activities_users_school_year` AS t1 LEFT JOIN (SELECT * FROM reflections GROUP BY ac_activity,us_user) AS t2 ON t1.ac_activity = t2.ac_activity
 );
 ALTER TABLE `V_all_activities_users` ADD PRIMARY KEY( `ac_activity`, `us_user`);
 
@@ -367,7 +369,7 @@ UPDATE V_tmp_all_activities_users b, activities_users_school_year p
 -- ACTIVITIES INFO
 DROP TABLE IF EXISTS V_activities_info;
 CREATE TABLE V_activities_info AS (
-	SELECT ac_activity, us_user, at_activityType, len_description, len_observations, activity_school_year, 
+	SELECT ac_activity, us_user, at_activityType, len_description, len_observations, activity_school_year, start_year, 
 			ac_atSchool, ac_atInteraziendale, (1-ac_atSchool-ac_atInteraziendale) AS ac_atCompany, 
 			len_steps, avg_step_len, STD(single_step_len) AS std_step_len, n_steps,
 			au_evaluation AS user_evaluation, start_date, ac_date AS end_date, DATEDIFF(ac_date,start_date) AS edit_period,

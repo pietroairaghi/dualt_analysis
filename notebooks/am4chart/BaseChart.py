@@ -10,6 +10,7 @@ class BaseChart:
     legend = True
     params = {}
     COL_X = '__am4chart_col_x'
+    theme = 'frozen'
 
     def __init__(self, height=500, data=None, title=None):
         self.params = {}
@@ -23,6 +24,18 @@ class BaseChart:
     def setTitle(self, title):
         self.title = title
         self.params['title'] = title
+
+    def set_y_label(self, label):
+        self.params['y_title'] = label
+
+    def set_x_label(self, label):
+        self.params['x_title'] = label
+
+    def x_labels_hide(self, hide=True):
+        self.params['hide_x_labels'] = hide
+
+    def y_labels_hide(self, hide=True):
+        self.params['hide_y_labels'] = hide
 
     def showLegend(self, enable=True):
         self.legend = enable
@@ -82,8 +95,13 @@ class BaseChart:
 
         self._load_params()
 
-        self.js += '''
-        require(['amchart_core', 'amchart_charts', 'amcharts4/themes/animated'], ''' + self.callbackFn + '''(params,"''' + self.chartID + '''") , function (err) {
+        if self.theme:
+            requires = f'''['amchart_core', 'amchart_charts', 'amcharts4/themes/animated', 'amcharts4/themes/{self.theme}']'''
+        else:
+            requires = f'''['amchart_core', 'amchart_charts', 'amcharts4/themes/animated']'''
+
+        self.js += f'''
+        require({requires}, ''' + self.callbackFn + '''(params,"''' + self.chartID + '''") , function (err) {
             console.log(err);
         });
         '''

@@ -74,6 +74,15 @@ CREATE OR REPLACE VIEW logins_per_month AS (
 );
 
 -- number of activities per month
+CREATE OR REPLACE VIEW activities_per_month AS (
+	SELECT MONTH(ac_date) AS month, activity_school_year, COUNT(*) AS n_activities, 
+			SUM(at_activityType = 'recipe') AS n_recipes, 
+			SUM(at_activityType = 'experience') AS n_experiences 
+		FROM activities_users_school_year
+		GROUP BY MONTH(ac_date), activity_school_year
+);
+
+-- number of activities per month per users
 CREATE OR REPLACE VIEW activities_per_month_per_user AS (
 	SELECT MONTH(ac_date) AS month, activity_school_year, us_user, COUNT(*) AS n_user_activities, 
 			SUM(at_activityType = 'recipe') AS n_user_recipes, 
@@ -157,7 +166,7 @@ CREATE TABLE V_months_feedbacks AS (
 -- Total length of recipes description: average + SD / per month
 DROP TABLE IF EXISTS len_info_per_months;
 CREATE TABLE len_info_per_months AS (
-	SELECT MONTH(ac_date) AS month, activity_school_year, 
+	SELECT MONTH(ac_date) AS month, activity_school_year, start_year, 
 		ROUND(AVG(activity_total_length)) AS avg_activity_total_length,
 		ROUND(STD(activity_total_length),2) AS std_activity_total_length,
 		ROUND(AVG(len_description)) AS avg_len_descriptions,
@@ -180,7 +189,7 @@ CREATE TABLE len_info_per_months AS (
 -- Total length of recipes reflections: average + SD / per month
 DROP TABLE IF EXISTS reflection_len_info_per_months;
 CREATE TABLE reflection_len_info_per_months AS (
-		SELECT MONTH(ac_date) AS month, activity_school_year, 
+		SELECT MONTH(ac_date) AS month, activity_school_year, start_year, 
 		ROUND(AVG((len_bilancio+len_competenze+len_miglioramenti+len_critici)/4),2) AS avg_sum_len_reflections,
 		ROUND(STD((len_bilancio+len_competenze+len_miglioramenti+len_critici)/4),2) AS std_avg_sum_len_reflections,
 		ROUND(AVG(avg_reflection_length),2) AS avg_avg_len_reflections,
@@ -216,7 +225,7 @@ CREATE OR REPLACE VIEW all_months_and_years_per_year AS (
 
 DROP TABLE IF EXISTS info_lengths;
 CREATE TABLE info_lengths AS (
-	SELECT MONTH(end_date) AS month, activity_school_year,
+	SELECT MONTH(end_date) AS month, activity_school_year, start_year, 
 		COUNT(CASE WHEN avg_reflection_length > 0 THEN 1 END) AS total_reflections, 
 		COUNT(CASE WHEN (avg_reflection_length = 0 OR avg_reflection_length IS NULL) THEN 1 END) AS total_null_reflections
 		
