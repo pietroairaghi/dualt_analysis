@@ -1,0 +1,51 @@
+cominciare in agosto
+grafico con 34 mesi
+
+
+
+percentuale request feedback
+delay!
+
+
+bar plot dove ogni colonna è un supervisore che fa vedere il tasso di risposta
+
+
+modifiche dopo il feedback?
+
+
+
+https://us02web.zoom.us/j/87836559415
+
+
+Verificare i feedback in base all'anno solare
+
+
+As well the response/request ratio for each supervisor: mettere un trigger o un gradiente per capire quante richieste sono fatte o ricevute
+
+
+collegare il docente al supervisor attraverso il supervisor e dividere per teacher <- asp, magari dividere per cantone. Si meglio per cantoni.
+
+
+Trovare diverse categorie di supervisori: appartiene a una grande azienda? è affidabile (più di un apprendista nel corso del tempo)
+
+
+Grafico degli edits raggruppare per il voto che hanno ricevuto nel feedback (non half point dice alberto, anzi ecco le categorie: sotto il 4) -> grafico con grades alle x e tre line (i tre anni). y = number of edits (meglio -> the fact they edit più che il numero -> quindi la PERCENTUALE)
+
+
+
+Dal canto mio (alberto è d'accordo):
+trovare una metrics per capire quanto un formatore è buono
+trovare una metrics per capire quanto uno studente è buono
+trovare una metrics per capire quanto una attivtà è buona
+trovare una metrics per capire quanto una riflession è buona
+
+
+sovrapporre logins
+
+
+raggruppare total lenght of average feedback
+
+
+
+TODO subito:
+chiamare nicola e chiedere anche i dati mancanti

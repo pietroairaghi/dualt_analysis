@@ -142,13 +142,14 @@ CREATE OR REPLACE VIEW n_received_feedback AS (
 
 DROP TABLE IF EXISTS V_user_info;
 CREATE TABLE V_user_info AS (
-	SELECT users.us_user as user_id, CONCAT(us_first_name,' ',us_last_name) AS user_name, us_archived as archived,user_type,classes, companies, 
+	SELECT users.us_user, CONCAT(us_first_name,' ',us_last_name) AS user_name, us_user_name AS user_email, start_semester, start_year,
+		us_archived as archived,user_type,classes, companies, 
 		n_activities, n_recipes, n_experiences, n_reflections, n_recipe_reflections, n_experience_reflections,
 		n_in_curriculum,n_recipes_in_curriculum,n_experiences_in_curriculum, 
 		n_in_curriculum_semester1,n_in_curriculum_semester2,
 		n_in_curriculum_semester3,n_in_curriculum_semester4,n_in_curriculum_semester5,
 		n_feedback_requests,n_received_feedback_responses,n_received_feedback_requests,n_feedback_responses,
-		avg_activity_evaluations, avg_reflection_length, avg_specific_evaluations,
+		avg_activity_evaluations, avg_reflection_length, avg_specific_evaluations, avg_supervisor_evaluation,
 		n_files,n_folders
 	FROM `users` 
 	
@@ -178,6 +179,10 @@ CREATE TABLE V_user_info AS (
 			SELECT us_user, AVG(au_evaluation) AS avg_activity_evaluations FROM activities_users GROUP BY us_user
 		) AS T_avg_activity_evals
 		
+		NATURAL LEFT JOIN(
+			SELECT us_user, AVG(supervisor_evaluation) AS avg_supervisor_evaluation FROM activities_users NATURAL LEFT JOIN (SELECT ac_activity, ar_evaluation AS supervisor_evaluation FROM activities_responsables) AS resp GROUP BY us_user
+		) supervisor_evaluation
+		
 		NATURAL LEFT JOIN n_activities
 		NATURAL LEFT JOIN n_recipes
 		NATURAL LEFT JOIN n_experiences
@@ -199,7 +204,7 @@ CREATE TABLE V_user_info AS (
 			SELECT us_user, COUNT(us_user) AS n_folders FROM packs_users GROUP BY us_user
 		) as T_folders
 		
-	WHERE users.us_user>20
+	WHERE users.us_user>20 AND users.us_user NOT BETWEEN 500000 AND 500020
 );
 
 
@@ -329,7 +334,7 @@ ALTER TABLE `V_activities_word_count` ADD PRIMARY KEY(`ac_activity`);
 CREATE OR REPLACE VIEW users_start_semester AS (
 	SELECT us_user, 
 		(CASE 
-			WHEN MONTH(MIN(date)) < '8' THEN STR_TO_DATE(CONCAT(YEAR(MIN(date))-1,'-09-01'), '%Y-%m-%d') 
+			WHEN MONTH(MIN(date)) < '8' THEN STR_TO_DATE(CONCAT(YEAR(MIN(date))-1,'-08-01'), '%Y-%m-%d') 
 			ELSE STR_TO_DATE(CONCAT(YEAR(MIN(date)),'-08-01'), '%Y-%m-%d')
 		END) AS start_semester,
 		(CASE 
