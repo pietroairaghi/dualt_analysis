@@ -25,13 +25,203 @@ DELIMITER ;
 
 
 
+CREATE OR REPLACE VIEW users_start_semester AS (
+	SELECT us_user, 
+		(CASE 
+			WHEN MONTH(MIN(date)) < '8' THEN STR_TO_DATE(CONCAT(YEAR(MIN(date))-1,'-08-01'), '%Y-%m-%d') 
+			ELSE STR_TO_DATE(CONCAT(YEAR(MIN(date)),'-08-01'), '%Y-%m-%d')
+		END) AS start_semester,
+		(CASE 
+			WHEN MONTH(MIN(date)) < '8' THEN YEAR(MIN(date))-1
+			ELSE YEAR(MIN(date))
+		END) AS start_year
+	FROM log_logins NATURAL JOIN users GROUP BY us_user
+);
+
+
+CREATE OR REPLACE VIEW activities_users_school_year AS (
+	SELECT *, ABS(TIMESTAMPDIFF(year,ac_date, start_semester))+1 AS activity_school_year FROM `activities` 
+		NATURAL JOIN activities_users 
+		NATURAL LEFT JOIN users_start_semester
+);
+
+DROP TABLE IF EXISTS V_activities_word_count;
+CREATE TABLE V_activities_word_count AS (
+	SELECT ac_activity, wordcount(ac_description) AS len_description, wordcount(ac_observations) AS len_observations
+		FROM activities
+);
+ALTER TABLE `V_activities_word_count` ADD PRIMARY KEY(`ac_activity`);
+
+
+DROP TABLE IF EXISTS V_LOG_activities;
+CREATE TABLE V_LOG_activities AS (
+	SELECT * 
+		FROM (
+			SELECT ac_activity, MIN(data) AS creation_date 
+				FROM LOG_activities 
+				WHERE operazione = 'I' 
+				GROUP BY ac_activity
+		) AS t1
+		NATURAL LEFT JOIN (
+			SELECT ac_activity, MAX(data) AS last_edit_date 
+				FROM LOG_activities 
+				WHERE operazione = 'U' 
+				GROUP BY ac_activity
+		) AS t2
+);
+ALTER TABLE `V_LOG_activities` ADD PRIMARY KEY(`ac_activity`);
+
+
+DROP TABLE IF EXISTS V_reflections_info;
+CREATE TABLE V_reflections_info AS (
+	SELECT ac_activity, us_user, rf_field, ref_evaluation, wordcount(ref_reflection) AS len_reflection 
+		FROM reflections 
+);
+ALTER TABLE `V_reflections_info` ADD INDEX( `ac_activity`, `us_user`);
+
+
+DROP TABLE IF EXISTS V_activity_reflections_info;
+CREATE TABLE V_activity_reflections_info AS (
+	SELECT 
+		ac_activity, us_user,
+		ROUND(AVG(len_reflection)) AS avg_reflection_length, 
+		ROUND(AVG(ref_evaluation),2) AS avg_specific_evaluations, 
+		len_bilancio, len_competenze, len_miglioramenti, len_critici 
+		
+		
+		FROM V_reflections_info 
+		
+			NATURAL LEFT JOIN(
+				SELECT ac_activity, us_user, len_reflection AS len_bilancio
+					FROM V_reflections_info WHERE rf_field = 'bilancio_apprendimenti'
+				GROUP BY ac_activity,us_user
+			) AS T_len_bilancio
+			NATURAL LEFT JOIN(
+				SELECT ac_activity, us_user, len_reflection  AS len_competenze
+					FROM V_reflections_info WHERE rf_field = 'documentazione_competenze'
+				GROUP BY ac_activity,us_user
+			) AS T_len_competenze
+			NATURAL LEFT JOIN(
+				SELECT ac_activity, us_user, len_reflection  AS len_miglioramenti
+					FROM V_reflections_info WHERE rf_field = 'miglioramenti'
+				GROUP BY ac_activity,us_user
+			) AS T_len_miglioramenti
+			NATURAL LEFT JOIN(
+				SELECT ac_activity, us_user, len_reflection  AS len_critici
+					FROM V_reflections_info WHERE rf_field = 'punti_critici'
+				GROUP BY ac_activity,us_user
+			) AS T_len_critici
+		
+		GROUP BY ac_activity,us_user
+);
+ALTER TABLE `V_activity_reflections_info` ADD PRIMARY KEY( `ac_activity`, `us_user`);
+
+
+DROP TABLE IF EXISTS V_files_step_info;
+CREATE TABLE V_files_step_info AS (
+	SELECT ac_activity, COUNT(fi_file) AS n_images FROM files_steps NATURAL JOIN steps GROUP BY ac_activity
+);
+ALTER TABLE `V_files_step_info` ADD PRIMARY KEY(`ac_activity`);
+
+
+DROP TABLE IF EXISTS V_steps_info;
+CREATE TABLE V_steps_info AS (
+	SELECT st_idStep, ac_activity, wordcount(st_description) as len_step
+		FROM steps 
+			WHERE LENGTH(st_description) > 0 
+		GROUP BY ac_activity
+);
+ALTER TABLE `V_steps_info` ADD PRIMARY KEY(`ac_activity`);
+
+
+
+-- ACTIVITIES INFO
+DROP TABLE IF EXISTS V_activities_info;
+CREATE TABLE V_activities_info AS (
+	SELECT ac_activity, us_user, at_activityType, ac_titolo AS ac_title, len_description, len_observations, activity_school_year, start_year, 
+			ac_atSchool, ac_atInteraziendale, (1-ac_atSchool-ac_atInteraziendale) AS ac_atCompany, 
+			len_steps, avg_step_len, STD(len_step) AS std_step_len, n_steps,
+			au_evaluation AS user_evaluation, 
+			creation_date, MONTH(creation_date) AS creation_month, YEAR(creation_date) AS creation_year, 
+			last_edit_date, MONTH(last_edit_date) AS last_edit_month, YEAR(last_edit_date) AS last_edit_year, 
+			DATEDIFF(last_edit_date,creation_date) AS edit_period,
+			avg_specific_evaluations, avg_reflection_length, STD(len_reflection) AS std_reflection_length, in_curriculum,
+			len_bilancio, len_competenze, len_miglioramenti, len_critici, 
+			(len_description+len_steps+len_description) AS activity_total_length,
+			n_edits, n_images
+	FROM activities_users_school_year NATURAL JOIN `activities` NATURAL LEFT JOIN activities_versions NATURAL LEFT JOIN activities_users
+
+		NATURAL LEFT JOIN V_activities_word_count
+
+		NATURAL LEFT JOIN V_LOG_activities
+		
+		NATURAL LEFT JOIN(
+			SELECT * FROM V_reflections_info WHERE len_reflection > 0
+		) AS T_ref_info
+		
+		NATURAL LEFT JOIN V_activity_reflections_info
+		
+		NATURAL LEFT JOIN V_files_step_info
+		
+		NATURAL LEFT JOIN(
+			SELECT ac_activity, atcl_classificationType, 1 AS in_curriculum FROM activities NATURAL LEFT JOIN activities_classification
+				WHERE atcl_classificationType = 'inCurriculum'
+		) AS T_check_curriculum
+
+		NATURAL LEFT JOIN(
+			SELECT st_idStep, ac_activity, ROUND(AVG(len_step)) AS avg_step_len, 
+					SUM(len_step) as len_steps, COUNT(*) AS n_steps 
+				FROM V_steps_info 
+			GROUP BY ac_activity
+		) AS T_steps_avg_info
+		
+		NATURAL LEFT JOIN V_steps_info
+		
+		NATURAL LEFT JOIN(
+			SELECT ac_activity, COUNT(*) AS n_edits FROM LOG_activities WHERE operazione = 'U' GROUP BY ac_activity, YEAR(data), MONTH(data), DAY(data), HOUR(data)
+		) AS T_edits
+		
+	WHERE acv_type = 'final'
+
+	GROUP BY ac_activity, us_user
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- N Activities per user
 CREATE OR REPLACE VIEW n_activities AS (
-	SELECT us_user, COUNT(ac_activity) as n_activities FROM activities_users 
-		NATURAL JOIN activities_versions
-		WHERE acv_type = 'final'
-		GROUP BY us_user
+	SELECT us_user, COUNT(*) AS n_activities, 
+		COUNT(CASE WHEN activity_school_year = 1 THEN 1 END) as n_activities_school_year_1,
+		COUNT(CASE WHEN activity_school_year = 2 THEN 1 END) as n_activities_school_year_2,
+		COUNT(CASE WHEN activity_school_year = 3 THEN 1 END) as n_activities_school_year_3 
+		
+		FROM V_activities_info 
+		
+		WHERE activity_school_year <=3
+		
+	GROUP BY us_user
 );
 	
 -- N recipes per user
@@ -144,7 +334,7 @@ DROP TABLE IF EXISTS V_user_info;
 CREATE TABLE V_user_info AS (
 	SELECT users.us_user, CONCAT(us_first_name,' ',us_last_name) AS user_name, us_user_name AS user_email, start_semester, start_year,
 		us_archived as archived,user_type,classes, companies, 
-		n_activities, n_recipes, n_experiences, n_reflections, n_recipe_reflections, n_experience_reflections,
+		n_activities, n_activities_school_year_1, n_activities_school_year_2, n_activities_school_year_3, n_recipes, n_experiences, n_reflections, n_recipe_reflections, n_experience_reflections,
 		n_in_curriculum,n_recipes_in_curriculum,n_experiences_in_curriculum, 
 		n_in_curriculum_semester1,n_in_curriculum_semester2,
 		n_in_curriculum_semester3,n_in_curriculum_semester4,n_in_curriculum_semester5,
@@ -233,6 +423,36 @@ SELECT us_user, MONTH(ac_date) AS month, STD(DAY(ac_date)) AS day_std, COUNT(ac_
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- STEPS info BY ACTIVITY
 DROP TABLE IF EXISTS V_activity_steps_info;
 CREATE TABLE V_activity_steps_info AS (
@@ -247,62 +467,6 @@ CREATE TABLE V_activity_steps_info AS (
 ALTER TABLE `V_activity_steps_info` ADD PRIMARY KEY(`ac_activity`);
 
 
-DROP TABLE IF EXISTS V_LOG_activities_inserts;
-CREATE TABLE V_LOG_activities_inserts AS (
-	SELECT ac_activity, MIN(data) AS start_date FROM LOG_activities WHERE operazione = 'I' GROUP BY ac_activity
-);
-ALTER TABLE `V_LOG_activities_inserts` ADD PRIMARY KEY(`ac_activity`);
-
-
-DROP TABLE IF EXISTS V_LOG_activities_updates;
-CREATE TABLE V_LOG_activities_updates AS (
-	SELECT ac_activity, COUNT(*) AS n_edits FROM LOG_activities WHERE operazione = 'U' GROUP BY ac_activity
-);
-ALTER TABLE `V_LOG_activities_updates` ADD PRIMARY KEY(`ac_activity`);
-
-
-DROP TABLE IF EXISTS V_files_step_info;
-CREATE TABLE V_files_step_info AS (
-	SELECT ac_activity, COUNT(fi_file) AS n_images FROM files_steps NATURAL JOIN steps GROUP BY ac_activity
-);
-ALTER TABLE `V_files_step_info` ADD PRIMARY KEY(`ac_activity`);
-
-
-DROP TABLE IF EXISTS V_reflections_info;
-CREATE TABLE V_reflections_info AS (
-	SELECT 
-		ac_activity, us_user,
-		ROUND(AVG(wordcount(ref_reflection))) AS avg_reflection_length, 
-		ROUND(AVG(ref_evaluation),2) AS avg_specific_evaluations, 
-		len_bilancio, len_competenze, len_miglioramenti, len_critici 
-		
-		
-		FROM reflections 
-		
-			NATURAL LEFT JOIN(
-				SELECT ac_activity, us_user, wordcount(ref_reflection) AS len_bilancio
-					FROM reflections WHERE rf_field = 'bilancio_apprendimenti'
-				GROUP BY ac_activity,us_user
-			) AS T_len_bilancio
-			NATURAL LEFT JOIN(
-				SELECT ac_activity, us_user, wordcount(ref_reflection)  AS len_competenze
-					FROM reflections WHERE rf_field = 'documentazione_competenze'
-				GROUP BY ac_activity,us_user
-			) AS T_len_competenze
-			NATURAL LEFT JOIN(
-				SELECT ac_activity, us_user, wordcount(ref_reflection)  AS len_miglioramenti
-					FROM reflections WHERE rf_field = 'miglioramenti'
-				GROUP BY ac_activity,us_user
-			) AS T_len_miglioramenti
-			NATURAL LEFT JOIN(
-				SELECT ac_activity, us_user, wordcount(ref_reflection)  AS len_critici
-					FROM reflections WHERE rf_field = 'punti_critici'
-				GROUP BY ac_activity,us_user
-			) AS T_len_critici
-		
-		GROUP BY ac_activity,us_user
-);
-ALTER TABLE `V_reflections_info` ADD PRIMARY KEY( `ac_activity`, `us_user`);
 
 
 DROP TABLE IF EXISTS V_for_std_reflections;
@@ -323,33 +487,9 @@ CREATE TABLE V_for_std_steps AS (
 ALTER TABLE `V_for_std_steps` ADD INDEX( `ac_activity`);
 
 
-DROP TABLE IF EXISTS V_activities_word_count;
-CREATE TABLE V_activities_word_count AS (
-	SELECT ac_activity, wordcount(ac_description) AS len_description, wordcount(ac_observations) AS len_observations
-		FROM activities
-);
-ALTER TABLE `V_activities_word_count` ADD PRIMARY KEY(`ac_activity`);
 
 
-CREATE OR REPLACE VIEW users_start_semester AS (
-	SELECT us_user, 
-		(CASE 
-			WHEN MONTH(MIN(date)) < '8' THEN STR_TO_DATE(CONCAT(YEAR(MIN(date))-1,'-08-01'), '%Y-%m-%d') 
-			ELSE STR_TO_DATE(CONCAT(YEAR(MIN(date)),'-08-01'), '%Y-%m-%d')
-		END) AS start_semester,
-		(CASE 
-			WHEN MONTH(MIN(date)) < '8' THEN YEAR(MIN(date))-1
-			ELSE YEAR(MIN(date))
-		END) AS start_year
-	FROM log_logins NATURAL JOIN users GROUP BY us_user
-);
 
-
-CREATE OR REPLACE VIEW activities_users_school_year AS (
-	SELECT *, ABS(TIMESTAMPDIFF(year,ac_date, start_semester))+1 AS activity_school_year FROM `activities` 
-		NATURAL JOIN activities_users 
-		NATURAL LEFT JOIN users_start_semester
-);
 
 
 DROP TABLE IF EXISTS V_all_activities_users;
@@ -370,45 +510,6 @@ UPDATE V_tmp_all_activities_users b, activities_users_school_year p
 --);
 --ALTER TABLE `V_all_activities_users` ADD PRIMARY KEY( `ac_activity`, `us_user`);
 
-
--- ACTIVITIES INFO
-DROP TABLE IF EXISTS V_activities_info;
-CREATE TABLE V_activities_info AS (
-	SELECT ac_activity, us_user, at_activityType, len_description, len_observations, activity_school_year, start_year, 
-			ac_atSchool, ac_atInteraziendale, (1-ac_atSchool-ac_atInteraziendale) AS ac_atCompany, 
-			len_steps, avg_step_len, STD(single_step_len) AS std_step_len, n_steps,
-			au_evaluation AS user_evaluation, start_date, ac_date AS end_date, DATEDIFF(ac_date,start_date) AS edit_period,
-			avg_specific_evaluations, avg_reflection_length, STD(single_reflection_length) AS std_reflection_length, in_curriculum,
-			len_bilancio, len_competenze, len_miglioramenti, len_critici, 
-			(len_description+len_steps+len_description) AS activity_total_length,
-			n_edits
-	FROM V_all_activities_users NATURAL LEFT JOIN `activities` NATURAL LEFT JOIN activities_versions NATURAL LEFT JOIN activities_users
-
-		NATURAL LEFT JOIN V_activities_word_count
-
-		NATURAL LEFT JOIN V_LOG_activities_inserts
-		
-		NATURAL LEFT JOIN V_LOG_activities_updates
-		
-		NATURAL LEFT JOIN V_reflections_info
-		
-		NATURAL LEFT JOIN V_for_std_reflections
-		
-		NATURAL LEFT JOIN V_for_std_steps
-		
-		NATURAL LEFT JOIN V_files_step_info
-		
-		NATURAL LEFT JOIN(
-			SELECT ac_activity, atcl_classificationType, 1 AS in_curriculum FROM activities NATURAL LEFT JOIN activities_classification
-				WHERE atcl_classificationType = 'inCurriculum'
-		) AS T_check_curriculum
-
-		NATURAL LEFT JOIN V_activity_steps_info
-		
-	WHERE acv_type = 'final'
-
-	GROUP BY ac_activity, us_user
-);
 
 
 

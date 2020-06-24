@@ -49,3 +49,22 @@ raggruppare total lenght of average feedback
 
 TODO subito:
 chiamare nicola e chiedere anche i dati mancanti
+
+
+
+
+----------------------- MEETING ALBERTO:
+https://us02web.zoom.us/j/85134154115?pwd=R2dMY1NhZ2tNRmZLQlU0dkdQaU1odz09
+
+
+Nota lavoro pratico più importate
+
+
+Numero di utenti attivi -> strano per il picco delle esperienze il terzo anno, quanti utenti hanno fatto quelle epserienze?
+
+
+Grafico con anni in X e tante linee che sono ognuna un formatore. Poi fare la stessa cosa con la media delle differenze (TOGLIERE QUELLI INATTIVI).
+
+SE RIESCO A FINIRE LE ANALISI SULLA CORRELAZIONE è BUONO, PERò PRIMA ATTENZIONE A PULIRE I DATI SU CHI HA ABBANDONATO E SU ALTRI DATI STRANI.
+MANDARE TUTTO A PIERRE PRIMA DELLA SERA PRIMA.
+
