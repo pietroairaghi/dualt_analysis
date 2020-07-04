@@ -1,27 +1,36 @@
 import pandas as pd
+import logging
 
 import numpy as np
 
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 
+import requests, json
+
+import gender_guesser.detector as gender
+
 
 class Users:
     df = None
     df_raw = None
     
-    def __init__(self, path):
-        self.df = pd.read_csv(path)
+    def __init__(self, path = None, df = None):
+        if path:
+            self.df = pd.read_csv(path)
+        elif df:
+            self.df = df
 
+    def preprocess_user_type(self):
         # One hot for user_type
         self.df = pd.concat(
-                [self.df.loc[:, :'user_type'], 
-                 (self.df['user_type'].str.split('\s*,\s*', expand=True)
-                   .stack()
-                   .str.get_dummies()
-                   .sum(level=0)), 
-                 self.df.loc[:, 'classes':]], 
-                axis=1)
+            [self.df.loc[:, :'user_type'],
+             (self.df['user_type'].str.split('\s*,\s*', expand=True)
+              .stack()
+              .str.get_dummies()
+              .sum(level=0)),
+             self.df.loc[:, 'classes':]],
+            axis=1)
 
         vals_to_replace = {'formatore': 'supervisor', 'docente': 'teacher', 'studente': 'student'}
         self.df.rename(columns=vals_to_replace, inplace=True)
@@ -54,19 +63,8 @@ class Users:
         last = self.df[self.df.duplicated(['user_email'], keep='last')].sort_values(by="user_email")['us_user']
         correct_map = dict(zip(first, last))
 
-        to_sum = ['n_activities', 'n_activities_school_year_1',
-                  'n_activities_school_year_2', 'n_activities_school_year_3', 'n_recipes',
-                  'n_experiences', 'n_reflections', 'n_recipe_reflections',
-                  'n_experience_reflections', 'n_in_curriculum',
-                  'n_recipes_in_curriculum', 'n_experiences_in_curriculum',
-                  'n_in_curriculum_semester1', 'n_in_curriculum_semester2',
-                  'n_in_curriculum_semester3', 'n_in_curriculum_semester4',
-                  'n_in_curriculum_semester5', 'n_feedback_requests',
-                  'n_received_feedback_responses', 'n_received_feedback_requests',
-                  'n_feedback_responses', 'n_files', 'n_folders']
-        to_avg = ['avg_activity_evaluations',
-                  'avg_reflection_length', 'avg_specific_evaluations',
-                  'avg_supervisor_evaluation']
+        to_sum = [col for col in self.df.columns if col.startswith("n_")]
+        to_avg = [col for col in self.df.columns if col.startswith("avg_")]
 
         for new_id, old_id in correct_map.items():
             m = self.df['us_user'] == old_id
@@ -75,13 +73,16 @@ class Users:
             self.df.loc[m, to_avg] = (self.df.loc[m, to_avg].values + self.df.loc[n, to_avg].values) / 2
 
         to_drop = correct_map.keys()
-        users.df = users.df.drop(users.df[users.df['us_user'].isin(to_drop)].index)
+        self.df = self.df.drop(self.df[self.df['us_user'].isin(to_drop)].index)
 
         self.correct_map = correct_map
 
     def id_correction(self,df,id_column = 'us_user'):
         return df.replace({id_column:self.correct_map})
 
+    def solve_gender(self):
+        detector = gender.Detector(case_sensitive=False)
+        self.df['gender'] = self.df['user_name'].apply(recognize_gender, detector=detector)
 
 class Activities:
     df = None
@@ -120,7 +121,7 @@ class Activities:
         self.df.dropna(subset=['start_year','creation_year'],inplace=True)
 
     def year_to_cat(self):
-        cols = ['start_year', 'creation_year']
+        cols = ['start_year', 'creation_year','activity_school_year']
         self.df[cols] = self.df[cols].astype('int64') #.astype('category')
 
     def drop_over_year(self):
@@ -190,3 +191,90 @@ def join_by_fuzzy(df, df_to_match,
     df1.loc[df1['correct_ratio'] < limit, tmp_joined_name] = no_match_value
 
     return df.assign(__fuzzy_result=df1[tmp_joined_name].values).rename({'__fuzzy_result': joined_column}, axis=1)
+
+
+
+class Genderize:
+    country_id = None
+
+    def __init__(self, country_id=None):
+        self.country_id = country_id
+
+    def get_genders(self, names):
+        url = ""
+        cnt = 0
+        if not isinstance(names, list):
+            names = [names, ]
+
+        for name in names:
+            if url == "":
+                url = "name[0]=" + name
+            else:
+                cnt += 1
+                url = url + "&name[" + str(cnt) + "]=" + name
+
+        if self.country_id:
+            url += "&country_id=" + self.country_id
+
+        req = requests.get("https://api.genderize.io?" + url)
+        results = json.loads(req.text)
+
+        retrn = []
+        for result in results:
+            if result["gender"] is not None:
+                retrn.append((result["gender"], result["probability"], result["count"]))
+            else:
+                retrn.append((u'None', u'0.0', 0.0))
+        return retrn
+
+    def get_gender(self, name):
+        res = self.get_genders([name])
+        return res[0][0]
+
+
+# names that are different wrt English
+male_diff_names = ["Andrea", "Daniele"]
+
+def recognize_gender(full_name, detector, weight=None):
+    logging.info(f"Recognizing gender for {full_name}: ")
+
+    # because we are not sure about the name & last name
+    male_pts = 0
+    female_pts = 0
+    names = full_name.split()
+
+    st_fr = 1 if (weight == 'last') else -1
+
+    for i, name in enumerate(names[::st_fr]):
+        name = ''.join(e for e in name if e.isalnum())
+        detection = detector.get_gender(name)
+        if (detection == 'male' or detection == 'mostly_male') or name in male_diff_names:
+            male_pts += (1 * (1 if weight is None else i))
+        elif detection == 'female' or detection == "mostly_female":
+            female_pts += (1 * (1 if weight is None else i))
+
+    if male_pts > female_pts:
+        logging.info("\tM")
+        return 1
+    if female_pts > male_pts:
+        logging.info("\tF")
+        return 0
+
+    if weight is None:
+        logging.info("\tRetrying with different weights..")
+        res = recognize_gender(full_name, detector, weight='first')  # "first" because most of the
+        # full names starts with the first name
+        if res != np.nan:
+            return res
+
+    if not isinstance(detector, Genderize):
+        logging.info("\tChange detector type..")
+        res = recognize_gender(full_name, Genderize(country_id="IT"))
+
+        if res != np.nan:
+            return res
+        else:
+            logging.info("\tTrying in all the regions..")
+            return recognize_gender(full_name, Genderize())
+
+    return np.nan

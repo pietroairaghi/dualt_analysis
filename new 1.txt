@@ -68,3 +68,33 @@ Grafico con anni in X e tante linee che sono ognuna un formatore. Poi fare la st
 SE RIESCO A FINIRE LE ANALISI SULLA CORRELAZIONE è BUONO, PERò PRIMA ATTENZIONE A PULIRE I DATI SU CHI HA ABBANDONATO E SU ALTRI DATI STRANI.
 MANDARE TUTTO A PIERRE PRIMA DELLA SERA PRIMA.
 
+
+
+---------------------MEETING PIERRE ALBERTO 25 GIUGNO:
+https://us02web.zoom.us/j/87328289681
+
+
+Si può vedere se COVID ha influenzato? --> fare qualcosa
+
+
+numero attività edits per grade --> PERCENTUALE
+
+giter in R --> vedere in python
+
+
+Clusters --> Fare qualcosa per capire come si dividono 
+
+
+GINEVRA E ALTRI <------------
+
+Differenza di sesso?
+
+APPRENDISTA VS PRIVATISTA <<-----------
+
+RISTORANTE VS MENSA (O PUBBLICO)
+
+
+FARE UN REPORT 
+
+
+
