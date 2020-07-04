@@ -1,0 +1,868 @@
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><table><tr><td><pre style="margin: 0; line-height: 125%">  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434</pre></td><td><pre style="margin: 0; line-height: 125%"><span style="color: #008800; font-weight: bold">DROP</span> FUNCTION <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> wordcount;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> FUNCTION <span style="color: #0066BB; font-weight: bold">wordcount</span>(str <span style="color: #333399; font-weight: bold">TEXT</span>)
+		RETURNS <span style="color: #333399; font-weight: bold">INT</span>
+		<span style="color: #008800; font-weight: bold">DETERMINISTIC</span>
+		<span style="color: #008800; font-weight: bold">SQL</span> SECURITY INVOKER
+		NO <span style="color: #008800; font-weight: bold">SQL</span>
+	BEGIN
+	<span style="color: #008800; font-weight: bold">DECLARE</span> wordCnt, idx, maxIdx <span style="color: #333399; font-weight: bold">INT</span> <span style="color: #008800; font-weight: bold">DEFAULT</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+	<span style="color: #008800; font-weight: bold">DECLARE</span> currChar, prevChar <span style="color: #333399; font-weight: bold">BOOL</span> <span style="color: #008800; font-weight: bold">DEFAULT</span> <span style="color: #0000DD; font-weight: bold">0</span>;
+	<span style="color: #333399; font-weight: bold">SET</span> maxIdx<span style="color: #333333">=</span><span style="color: #0066BB; font-weight: bold">char_length</span>(str);
+	<span style="color: #008800; font-weight: bold">WHILE</span> idx <span style="color: #333333">&lt;</span> maxIdx DO
+		<span style="color: #333399; font-weight: bold">SET</span> currChar<span style="color: #333333">=</span><span style="color: #0066BB; font-weight: bold">SUBSTRING</span>(str, idx, <span style="color: #0000DD; font-weight: bold">1</span>) <span style="color: #008800; font-weight: bold">RLIKE</span> <span style="background-color: #fff0f0">&#39;[[:alnum:]]&#39;</span>;
+		<span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">NOT</span> prevChar <span style="color: #008800; font-weight: bold">AND</span> currChar <span style="color: #008800; font-weight: bold">THEN</span>
+			<span style="color: #333399; font-weight: bold">SET</span> wordCnt<span style="color: #333333">=</span>wordCnt<span style="color: #333333">+</span><span style="color: #0000DD; font-weight: bold">1</span>;
+		END <span style="color: #008800; font-weight: bold">IF</span>;
+		<span style="color: #333399; font-weight: bold">SET</span> prevChar<span style="color: #333333">=</span>currChar;
+		<span style="color: #333399; font-weight: bold">SET</span> idx<span style="color: #333333">=</span>idx<span style="color: #333333">+</span><span style="color: #0000DD; font-weight: bold">1</span>;
+	END <span style="color: #008800; font-weight: bold">WHILE</span>;
+	<span style="color: #008800; font-weight: bold">RETURN</span> wordCnt;
+	END;
+
+
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW users_start_semester <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, 
+		(<span style="color: #008800; font-weight: bold">CASE</span> 
+			<span style="color: #008800; font-weight: bold">WHEN</span> <span style="color: #0066BB; font-weight: bold">MONTH</span>(<span style="color: #0066BB; font-weight: bold">MIN</span>(<span style="color: #333399; font-weight: bold">date</span>)) <span style="color: #333333">&lt;</span> <span style="background-color: #fff0f0">&#39;8&#39;</span> <span style="color: #008800; font-weight: bold">THEN</span> <span style="color: #0066BB; font-weight: bold">STR_TO_DATE</span>(<span style="color: #0066BB; font-weight: bold">CONCAT</span>(<span style="color: #333399; font-weight: bold">YEAR</span>(<span style="color: #0066BB; font-weight: bold">MIN</span>(<span style="color: #333399; font-weight: bold">date</span>))<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>,<span style="background-color: #fff0f0">&#39;-08-01&#39;</span>), <span style="background-color: #fff0f0">&#39;%Y-%m-%d&#39;</span>) 
+			<span style="color: #008800; font-weight: bold">ELSE</span> <span style="color: #0066BB; font-weight: bold">STR_TO_DATE</span>(<span style="color: #0066BB; font-weight: bold">CONCAT</span>(<span style="color: #333399; font-weight: bold">YEAR</span>(<span style="color: #0066BB; font-weight: bold">MIN</span>(<span style="color: #333399; font-weight: bold">date</span>)),<span style="background-color: #fff0f0">&#39;-08-01&#39;</span>), <span style="background-color: #fff0f0">&#39;%Y-%m-%d&#39;</span>)
+		END) <span style="color: #008800; font-weight: bold">AS</span> start_semester,
+		(<span style="color: #008800; font-weight: bold">CASE</span> 
+			<span style="color: #008800; font-weight: bold">WHEN</span> <span style="color: #0066BB; font-weight: bold">MONTH</span>(<span style="color: #0066BB; font-weight: bold">MIN</span>(<span style="color: #333399; font-weight: bold">date</span>)) <span style="color: #333333">&lt;</span> <span style="background-color: #fff0f0">&#39;8&#39;</span> <span style="color: #008800; font-weight: bold">THEN</span> <span style="color: #333399; font-weight: bold">YEAR</span>(<span style="color: #0066BB; font-weight: bold">MIN</span>(<span style="color: #333399; font-weight: bold">date</span>))<span style="color: #333333">-</span><span style="color: #0000DD; font-weight: bold">1</span>
+			<span style="color: #008800; font-weight: bold">ELSE</span> <span style="color: #333399; font-weight: bold">YEAR</span>(<span style="color: #0066BB; font-weight: bold">MIN</span>(<span style="color: #333399; font-weight: bold">date</span>))
+		END) <span style="color: #008800; font-weight: bold">AS</span> start_year
+	<span style="color: #008800; font-weight: bold">FROM</span> log_logins <span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> users <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW activities_users_school_year <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> <span style="color: #333333">*</span>, <span style="color: #0066BB; font-weight: bold">ABS</span>(<span style="color: #0066BB; font-weight: bold">TIMESTAMPDIFF</span>(<span style="color: #333399; font-weight: bold">year</span>,ac_date, start_semester))<span style="color: #333333">+</span><span style="color: #0000DD; font-weight: bold">1</span> <span style="color: #008800; font-weight: bold">AS</span> activity_school_year <span style="color: #008800; font-weight: bold">FROM</span> <span style="color: #AA6600">`activities`</span> 
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_users 
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> users_start_semester
+);
+
+<span style="color: #008800; font-weight: bold">DROP</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> V_activities_word_count;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">TABLE</span> V_activities_word_count <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, <span style="color: #0066BB; font-weight: bold">wordcount</span>(ac_description) <span style="color: #008800; font-weight: bold">AS</span> len_description, <span style="color: #0066BB; font-weight: bold">wordcount</span>(ac_observations) <span style="color: #008800; font-weight: bold">AS</span> len_observations
+		<span style="color: #008800; font-weight: bold">FROM</span> activities
+);
+<span style="color: #008800; font-weight: bold">ALTER</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #AA6600">`V_activities_word_count`</span> <span style="color: #008800; font-weight: bold">ADD</span> <span style="color: #008800; font-weight: bold">PRIMARY</span> <span style="color: #008800; font-weight: bold">KEY</span>(<span style="color: #AA6600">`ac_activity`</span>);
+
+
+<span style="color: #008800; font-weight: bold">DROP</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> V_LOG_activities;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">TABLE</span> V_LOG_activities <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> <span style="color: #333333">*</span> 
+		<span style="color: #008800; font-weight: bold">FROM</span> (
+			<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, <span style="color: #0066BB; font-weight: bold">MIN</span>(data) <span style="color: #008800; font-weight: bold">AS</span> creation_date 
+				<span style="color: #008800; font-weight: bold">FROM</span> LOG_activities 
+				<span style="color: #008800; font-weight: bold">WHERE</span> operazione <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;I&#39;</span> 
+				<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity
+		) <span style="color: #008800; font-weight: bold">AS</span> t1
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> (
+			<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, <span style="color: #0066BB; font-weight: bold">MAX</span>(data) <span style="color: #008800; font-weight: bold">AS</span> last_edit_date 
+				<span style="color: #008800; font-weight: bold">FROM</span> LOG_activities 
+				<span style="color: #008800; font-weight: bold">WHERE</span> operazione <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;U&#39;</span> 
+				<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity
+		) <span style="color: #008800; font-weight: bold">AS</span> t2
+);
+<span style="color: #008800; font-weight: bold">ALTER</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #AA6600">`V_LOG_activities`</span> <span style="color: #008800; font-weight: bold">ADD</span> <span style="color: #008800; font-weight: bold">PRIMARY</span> <span style="color: #008800; font-weight: bold">KEY</span>(<span style="color: #AA6600">`ac_activity`</span>);
+
+
+<span style="color: #008800; font-weight: bold">DROP</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> V_reflections_info;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">TABLE</span> V_reflections_info <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, us_user, rf_field, ref_evaluation, <span style="color: #0066BB; font-weight: bold">wordcount</span>(ref_reflection) <span style="color: #008800; font-weight: bold">AS</span> len_reflection 
+		<span style="color: #008800; font-weight: bold">FROM</span> reflections 
+);
+<span style="color: #008800; font-weight: bold">ALTER</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #AA6600">`V_reflections_info`</span> <span style="color: #008800; font-weight: bold">ADD</span> <span style="color: #008800; font-weight: bold">INDEX</span>( <span style="color: #AA6600">`ac_activity`</span>, <span style="color: #AA6600">`us_user`</span>);
+
+
+<span style="color: #008800; font-weight: bold">DROP</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> V_activity_reflections_info;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">TABLE</span> V_activity_reflections_info <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> 
+		ac_activity, us_user,
+		<span style="color: #0066BB; font-weight: bold">ROUND</span>(<span style="color: #0066BB; font-weight: bold">AVG</span>(len_reflection)) <span style="color: #008800; font-weight: bold">AS</span> avg_reflection_length, 
+		<span style="color: #0066BB; font-weight: bold">ROUND</span>(<span style="color: #0066BB; font-weight: bold">AVG</span>(ref_evaluation),<span style="color: #0000DD; font-weight: bold">2</span>) <span style="color: #008800; font-weight: bold">AS</span> avg_specific_evaluations, 
+		len_bilancio, len_competenze, len_miglioramenti, len_critici 
+		
+		
+		<span style="color: #008800; font-weight: bold">FROM</span> V_reflections_info 
+		
+			<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+				<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, us_user, len_reflection <span style="color: #008800; font-weight: bold">AS</span> len_bilancio
+					<span style="color: #008800; font-weight: bold">FROM</span> V_reflections_info <span style="color: #008800; font-weight: bold">WHERE</span> rf_field <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;bilancio_apprendimenti&#39;</span>
+				<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity,us_user
+			) <span style="color: #008800; font-weight: bold">AS</span> T_len_bilancio
+			<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+				<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, us_user, len_reflection  <span style="color: #008800; font-weight: bold">AS</span> len_competenze
+					<span style="color: #008800; font-weight: bold">FROM</span> V_reflections_info <span style="color: #008800; font-weight: bold">WHERE</span> rf_field <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;documentazione_competenze&#39;</span>
+				<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity,us_user
+			) <span style="color: #008800; font-weight: bold">AS</span> T_len_competenze
+			<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+				<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, us_user, len_reflection  <span style="color: #008800; font-weight: bold">AS</span> len_miglioramenti
+					<span style="color: #008800; font-weight: bold">FROM</span> V_reflections_info <span style="color: #008800; font-weight: bold">WHERE</span> rf_field <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;miglioramenti&#39;</span>
+				<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity,us_user
+			) <span style="color: #008800; font-weight: bold">AS</span> T_len_miglioramenti
+			<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+				<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, us_user, len_reflection  <span style="color: #008800; font-weight: bold">AS</span> len_critici
+					<span style="color: #008800; font-weight: bold">FROM</span> V_reflections_info <span style="color: #008800; font-weight: bold">WHERE</span> rf_field <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;punti_critici&#39;</span>
+				<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity,us_user
+			) <span style="color: #008800; font-weight: bold">AS</span> T_len_critici
+		
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity,us_user
+);
+<span style="color: #008800; font-weight: bold">ALTER</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #AA6600">`V_activity_reflections_info`</span> <span style="color: #008800; font-weight: bold">ADD</span> <span style="color: #008800; font-weight: bold">PRIMARY</span> <span style="color: #008800; font-weight: bold">KEY</span>( <span style="color: #AA6600">`ac_activity`</span>, <span style="color: #AA6600">`us_user`</span>);
+
+
+<span style="color: #008800; font-weight: bold">DROP</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> V_files_step_info;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">TABLE</span> V_files_step_info <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, <span style="color: #0066BB; font-weight: bold">COUNT</span>(fi_file) <span style="color: #008800; font-weight: bold">AS</span> n_images <span style="color: #008800; font-weight: bold">FROM</span> files_steps <span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> steps <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity
+);
+<span style="color: #008800; font-weight: bold">ALTER</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #AA6600">`V_files_step_info`</span> <span style="color: #008800; font-weight: bold">ADD</span> <span style="color: #008800; font-weight: bold">PRIMARY</span> <span style="color: #008800; font-weight: bold">KEY</span>(<span style="color: #AA6600">`ac_activity`</span>);
+
+
+<span style="color: #008800; font-weight: bold">DROP</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> V_steps_info;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">TABLE</span> V_steps_info <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> st_idStep, ac_activity, <span style="color: #0066BB; font-weight: bold">wordcount</span>(st_description) <span style="color: #008800; font-weight: bold">as</span> len_step
+		<span style="color: #008800; font-weight: bold">FROM</span> steps 
+			<span style="color: #008800; font-weight: bold">WHERE</span> <span style="color: #0066BB; font-weight: bold">LENGTH</span>(st_description) <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">0</span> 
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity
+);
+<span style="color: #008800; font-weight: bold">ALTER</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #AA6600">`V_steps_info`</span> <span style="color: #008800; font-weight: bold">ADD</span> <span style="color: #008800; font-weight: bold">PRIMARY</span> <span style="color: #008800; font-weight: bold">KEY</span>(<span style="color: #AA6600">`ac_activity`</span>);
+
+
+
+<span style="color: #888888">-- ACTIVITIES INFO</span>
+<span style="color: #008800; font-weight: bold">DROP</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> V_activities_info;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">TABLE</span> V_activities_info <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, us_user, at_activityType, ac_titolo <span style="color: #008800; font-weight: bold">AS</span> ac_title, len_description, len_observations, activity_school_year, start_year, 
+			ac_atSchool, ac_atInteraziendale, (<span style="color: #0000DD; font-weight: bold">1</span><span style="color: #333333">-</span>ac_atSchool<span style="color: #333333">-</span>ac_atInteraziendale) <span style="color: #008800; font-weight: bold">AS</span> ac_atCompany, 
+			len_steps, avg_step_len, <span style="color: #0066BB; font-weight: bold">STD</span>(len_step) <span style="color: #008800; font-weight: bold">AS</span> std_step_len, n_steps,
+			au_evaluation <span style="color: #008800; font-weight: bold">AS</span> user_evaluation, 
+			creation_date, <span style="color: #0066BB; font-weight: bold">MONTH</span>(creation_date) <span style="color: #008800; font-weight: bold">AS</span> creation_month, <span style="color: #333399; font-weight: bold">YEAR</span>(creation_date) <span style="color: #008800; font-weight: bold">AS</span> creation_year, 
+			last_edit_date, <span style="color: #0066BB; font-weight: bold">MONTH</span>(last_edit_date) <span style="color: #008800; font-weight: bold">AS</span> last_edit_month, <span style="color: #333399; font-weight: bold">YEAR</span>(last_edit_date) <span style="color: #008800; font-weight: bold">AS</span> last_edit_year, 
+			<span style="color: #0066BB; font-weight: bold">DATEDIFF</span>(last_edit_date,creation_date) <span style="color: #008800; font-weight: bold">AS</span> edit_period,
+			avg_specific_evaluations, avg_reflection_length, <span style="color: #0066BB; font-weight: bold">STD</span>(len_reflection) <span style="color: #008800; font-weight: bold">AS</span> std_reflection_length, in_curriculum,
+			len_bilancio, len_competenze, len_miglioramenti, len_critici, 
+			(len_description<span style="color: #333333">+</span>len_steps<span style="color: #333333">+</span>len_description) <span style="color: #008800; font-weight: bold">AS</span> activity_total_length,
+			n_edits, n_images
+	<span style="color: #008800; font-weight: bold">FROM</span> activities_users_school_year <span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> <span style="color: #AA6600">`activities`</span> <span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_versions <span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_users
+
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> V_activities_word_count
+
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> V_LOG_activities
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+			<span style="color: #008800; font-weight: bold">SELECT</span> <span style="color: #333333">*</span> <span style="color: #008800; font-weight: bold">FROM</span> V_reflections_info <span style="color: #008800; font-weight: bold">WHERE</span> len_reflection <span style="color: #333333">&gt;</span> <span style="color: #0000DD; font-weight: bold">0</span>
+		) <span style="color: #008800; font-weight: bold">AS</span> T_ref_info
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> V_activity_reflections_info
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> V_files_step_info
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+			<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, atcl_classificationType, <span style="color: #0000DD; font-weight: bold">1</span> <span style="color: #008800; font-weight: bold">AS</span> in_curriculum <span style="color: #008800; font-weight: bold">FROM</span> activities <span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_classification
+				<span style="color: #008800; font-weight: bold">WHERE</span> atcl_classificationType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;inCurriculum&#39;</span>
+		) <span style="color: #008800; font-weight: bold">AS</span> T_check_curriculum
+
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+			<span style="color: #008800; font-weight: bold">SELECT</span> st_idStep, ac_activity, <span style="color: #0066BB; font-weight: bold">ROUND</span>(<span style="color: #0066BB; font-weight: bold">AVG</span>(len_step)) <span style="color: #008800; font-weight: bold">AS</span> avg_step_len, 
+					<span style="color: #0066BB; font-weight: bold">SUM</span>(len_step) <span style="color: #008800; font-weight: bold">as</span> len_steps, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #333333">*</span>) <span style="color: #008800; font-weight: bold">AS</span> n_steps 
+				<span style="color: #008800; font-weight: bold">FROM</span> V_steps_info 
+			<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity
+		) <span style="color: #008800; font-weight: bold">AS</span> T_steps_avg_info
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> V_steps_info
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+			<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #333333">*</span>) <span style="color: #008800; font-weight: bold">AS</span> n_edits <span style="color: #008800; font-weight: bold">FROM</span> LOG_activities <span style="color: #008800; font-weight: bold">WHERE</span> operazione <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;U&#39;</span> <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity, <span style="color: #333399; font-weight: bold">YEAR</span>(data), <span style="color: #0066BB; font-weight: bold">MONTH</span>(data), <span style="color: #0066BB; font-weight: bold">DAY</span>(data), <span style="color: #0066BB; font-weight: bold">HOUR</span>(data)
+		) <span style="color: #008800; font-weight: bold">AS</span> T_edits
+		
+	<span style="color: #008800; font-weight: bold">WHERE</span> acv_type <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;final&#39;</span>
+
+	<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity, us_user
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<span style="color: #888888">-- N Activities per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_activities <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #333333">*</span>) <span style="color: #008800; font-weight: bold">AS</span> n_activities, 
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> activity_school_year <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span> <span style="color: #008800; font-weight: bold">THEN</span> <span style="color: #0000DD; font-weight: bold">1</span> END) <span style="color: #008800; font-weight: bold">as</span> n_activities_school_year_1,
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> activity_school_year <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">2</span> <span style="color: #008800; font-weight: bold">THEN</span> <span style="color: #0000DD; font-weight: bold">1</span> END) <span style="color: #008800; font-weight: bold">as</span> n_activities_school_year_2,
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> activity_school_year <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">3</span> <span style="color: #008800; font-weight: bold">THEN</span> <span style="color: #0000DD; font-weight: bold">1</span> END) <span style="color: #008800; font-weight: bold">as</span> n_activities_school_year_3 
+		
+		<span style="color: #008800; font-weight: bold">FROM</span> V_activities_info 
+		
+		<span style="color: #008800; font-weight: bold">WHERE</span> activity_school_year <span style="color: #333333">&lt;=</span><span style="color: #0000DD; font-weight: bold">3</span>
+		
+	<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+	
+<span style="color: #888888">-- N recipes per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_recipes <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(ac_activity) <span style="color: #008800; font-weight: bold">as</span> n_recipes <span style="color: #008800; font-weight: bold">FROM</span> users
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_users
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities
+	<span style="color: #008800; font-weight: bold">WHERE</span> at_activityType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;recipe&#39;</span>
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+<span style="color: #888888">-- N EXPERIENCES per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_experiences <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(ac_activity) <span style="color: #008800; font-weight: bold">as</span> n_experiences <span style="color: #008800; font-weight: bold">FROM</span> users
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_users
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities
+	<span style="color: #008800; font-weight: bold">WHERE</span> at_activityType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;experience&#39;</span>
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+<span style="color: #888888">-- N reflections (grouped by activity) per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_reflections <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span> ac_activity) <span style="color: #008800; font-weight: bold">as</span> n_reflections <span style="color: #008800; font-weight: bold">FROM</span> reflections 
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+<span style="color: #888888">-- N reflections (grouped by RECIPE) per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_recipe_reflections <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span> ac_activity) <span style="color: #008800; font-weight: bold">as</span> n_recipe_reflections <span style="color: #008800; font-weight: bold">FROM</span> reflections 
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities
+	<span style="color: #008800; font-weight: bold">WHERE</span> at_activityType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;recipe&#39;</span>
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+<span style="color: #888888">-- N reflections (grouped by RECIPE) per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_experience_reflections <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span> ac_activity) <span style="color: #008800; font-weight: bold">as</span> n_experience_reflections <span style="color: #008800; font-weight: bold">FROM</span> reflections 
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities
+	<span style="color: #008800; font-weight: bold">WHERE</span> at_activityType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;experience&#39;</span>
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+<span style="color: #888888">-- N activities in CURRICULUM per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_in_curriculum <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span> ac_activity) <span style="color: #008800; font-weight: bold">as</span> n_in_curriculum <span style="color: #008800; font-weight: bold">FROM</span> activities_classification 
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_users
+	<span style="color: #008800; font-weight: bold">WHERE</span> atcl_classificationType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;inCurriculum&#39;</span>
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+<span style="color: #888888">-- N RECIPES in CURRICULUM per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_recipes_in_curriculum <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span> ac_activity) <span style="color: #008800; font-weight: bold">as</span> n_recipes_in_curriculum <span style="color: #008800; font-weight: bold">FROM</span> activities_classification 
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_users
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities
+	<span style="color: #008800; font-weight: bold">WHERE</span> atcl_classificationType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;inCurriculum&#39;</span> <span style="color: #008800; font-weight: bold">AND</span> at_activityType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;recipe&#39;</span>
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+<span style="color: #888888">-- N EXPERIENCES in CURRICULUM per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_experiences_in_curriculum <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span> ac_activity) <span style="color: #008800; font-weight: bold">as</span> n_experiences_in_curriculum <span style="color: #008800; font-weight: bold">FROM</span> activities_classification 
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_users
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities
+	<span style="color: #008800; font-weight: bold">WHERE</span> atcl_classificationType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;inCurriculum&#39;</span> <span style="color: #008800; font-weight: bold">AND</span> at_activityType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;experience&#39;</span>
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+<span style="color: #888888">-- N activities in CURRICULUM per user per semester</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_in_curriculum_semester <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> us_user, 
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> atcl_option <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">1</span> <span style="color: #008800; font-weight: bold">THEN</span> ac_activity END)) <span style="color: #008800; font-weight: bold">as</span> n_in_curriculum_semester1,
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> atcl_option <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">2</span> <span style="color: #008800; font-weight: bold">THEN</span> ac_activity END)) <span style="color: #008800; font-weight: bold">as</span> n_in_curriculum_semester2,
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> atcl_option <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">3</span> <span style="color: #008800; font-weight: bold">THEN</span> ac_activity END)) <span style="color: #008800; font-weight: bold">as</span> n_in_curriculum_semester3,
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> atcl_option <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">4</span> <span style="color: #008800; font-weight: bold">THEN</span> ac_activity END)) <span style="color: #008800; font-weight: bold">as</span> n_in_curriculum_semester4,
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> atcl_option <span style="color: #333333">=</span> <span style="color: #0000DD; font-weight: bold">5</span> <span style="color: #008800; font-weight: bold">THEN</span> ac_activity END)) <span style="color: #008800; font-weight: bold">as</span> n_in_curriculum_semester5 
+    <span style="color: #008800; font-weight: bold">FROM</span> activities_classification 
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> activities_users
+	<span style="color: #008800; font-weight: bold">WHERE</span> atcl_classificationType <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;inCurriculum&#39;</span>
+		<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+);
+
+<span style="color: #888888">-- N sent feedback per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_sent_feedback <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> no_sender <span style="color: #008800; font-weight: bold">as</span> us_user, 
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> no_type <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;feedback request&#39;</span> <span style="color: #008800; font-weight: bold">THEN</span> <span style="color: #0000DD; font-weight: bold">1</span> END) <span style="color: #008800; font-weight: bold">AS</span> n_feedback_requests, 
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> no_type <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;feedback response&#39;</span> <span style="color: #008800; font-weight: bold">THEN</span> <span style="color: #0000DD; font-weight: bold">1</span> END) <span style="color: #008800; font-weight: bold">AS</span> n_feedback_responses 
+	<span style="color: #008800; font-weight: bold">FROM</span> notifications 
+	<span style="color: #008800; font-weight: bold">WHERE</span> no_sender <span style="color: #008800; font-weight: bold">IS</span> <span style="color: #008800; font-weight: bold">NOT</span> <span style="color: #003366; font-weight: bold">NULL</span>
+	<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> no_sender
+);
+
+<span style="color: #888888">-- N received feedback per user</span>
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">OR</span> <span style="color: #008800; font-weight: bold">REPLACE</span> VIEW n_received_feedback <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> no_recipient <span style="color: #008800; font-weight: bold">as</span> us_user, 
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> no_type <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;feedback request&#39;</span> <span style="color: #008800; font-weight: bold">THEN</span> <span style="color: #0000DD; font-weight: bold">1</span> END) <span style="color: #008800; font-weight: bold">AS</span> n_received_feedback_requests, 
+		<span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #008800; font-weight: bold">CASE</span> <span style="color: #008800; font-weight: bold">WHEN</span> no_type <span style="color: #333333">=</span> <span style="background-color: #fff0f0">&#39;feedback response&#39;</span> <span style="color: #008800; font-weight: bold">THEN</span> <span style="color: #0000DD; font-weight: bold">1</span> END) <span style="color: #008800; font-weight: bold">AS</span> n_received_feedback_responses 
+	<span style="color: #008800; font-weight: bold">FROM</span> notifications 
+	<span style="color: #008800; font-weight: bold">WHERE</span> no_recipient <span style="color: #008800; font-weight: bold">IS</span> <span style="color: #008800; font-weight: bold">NOT</span> <span style="color: #003366; font-weight: bold">NULL</span>
+	<span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> no_recipient
+);
+
+
+<span style="color: #008800; font-weight: bold">DROP</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> V_user_info;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">TABLE</span> V_user_info <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> users.us_user, <span style="color: #0066BB; font-weight: bold">CONCAT</span>(us_first_name,<span style="background-color: #fff0f0">&#39; &#39;</span>,us_last_name) <span style="color: #008800; font-weight: bold">AS</span> user_name, us_user_name <span style="color: #008800; font-weight: bold">AS</span> user_email, start_semester, start_year,
+		us_archived <span style="color: #008800; font-weight: bold">as</span> archived,user_type,classes, companies, 
+		n_activities, n_activities_school_year_1, n_activities_school_year_2, n_activities_school_year_3, n_recipes, n_experiences, n_reflections, n_recipe_reflections, n_experience_reflections,
+		n_in_curriculum,n_recipes_in_curriculum,n_experiences_in_curriculum, 
+		n_in_curriculum_semester1,n_in_curriculum_semester2,
+		n_in_curriculum_semester3,n_in_curriculum_semester4,n_in_curriculum_semester5,
+		n_feedback_requests,n_received_feedback_responses,n_received_feedback_requests,n_feedback_responses,
+		avg_activity_evaluations, avg_reflection_length, avg_specific_evaluations, avg_supervisor_evaluation,
+		n_files,n_folders, us_canton
+	<span style="color: #008800; font-weight: bold">FROM</span> <span style="color: #AA6600">`users`</span> 
+	
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> users_start_semester
+
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">JOIN</span> (
+			<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">GROUP_CONCAT</span>(ut_user_type) <span style="color: #008800; font-weight: bold">as</span> user_type <span style="color: #008800; font-weight: bold">FROM</span> users_userTypes <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+		) <span style="color: #008800; font-weight: bold">AS</span> T_user_types
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> (
+			<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">GROUP_CONCAT</span>(cl_class) <span style="color: #008800; font-weight: bold">as</span> classes <span style="color: #008800; font-weight: bold">FROM</span> <span style="color: #AA6600">`users_classes`</span> <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+		) <span style="color: #008800; font-weight: bold">AS</span> T_classes
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> (
+			<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">GROUP_CONCAT</span>(<span style="color: #008800; font-weight: bold">DISTINCT</span> co_company) <span style="color: #008800; font-weight: bold">as</span> companies <span style="color: #008800; font-weight: bold">FROM</span> bosses <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+		) <span style="color: #008800; font-weight: bold">AS</span> T_companies
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> (
+			<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(<span style="color: #333333">*</span>) <span style="color: #008800; font-weight: bold">as</span> total_logins <span style="color: #008800; font-weight: bold">FROM</span> LOG_logins <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+		) <span style="color: #008800; font-weight: bold">AS</span> T_logins
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+			<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">ROUND</span>(<span style="color: #0066BB; font-weight: bold">AVG</span>(<span style="color: #0066BB; font-weight: bold">LENGTH</span>(ref_reflection))) <span style="color: #008800; font-weight: bold">AS</span> avg_reflection_length, <span style="color: #0066BB; font-weight: bold">AVG</span>(ref_evaluation) <span style="color: #008800; font-weight: bold">AS</span> avg_specific_evaluations <span style="color: #008800; font-weight: bold">FROM</span> reflections <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+		) <span style="color: #008800; font-weight: bold">AS</span> T_reflection_details
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+			<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">AVG</span>(au_evaluation) <span style="color: #008800; font-weight: bold">AS</span> avg_activity_evaluations <span style="color: #008800; font-weight: bold">FROM</span> activities_users <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+		) <span style="color: #008800; font-weight: bold">AS</span> T_avg_activity_evals
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span>(
+			<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">AVG</span>(supervisor_evaluation) <span style="color: #008800; font-weight: bold">AS</span> avg_supervisor_evaluation <span style="color: #008800; font-weight: bold">FROM</span> activities_users <span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> (<span style="color: #008800; font-weight: bold">SELECT</span> ac_activity, ar_evaluation <span style="color: #008800; font-weight: bold">AS</span> supervisor_evaluation <span style="color: #008800; font-weight: bold">FROM</span> activities_responsables) <span style="color: #008800; font-weight: bold">AS</span> resp <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+		) supervisor_evaluation
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_activities
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_recipes
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_experiences
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_reflections
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_recipe_reflections
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_experience_reflections
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_in_curriculum
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_recipes_in_curriculum
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_experiences_in_curriculum
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_in_curriculum_semester
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_sent_feedback
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> n_received_feedback
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> (
+			<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(us_user) <span style="color: #008800; font-weight: bold">AS</span> n_files <span style="color: #008800; font-weight: bold">FROM</span> files <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+		) <span style="color: #008800; font-weight: bold">as</span> T_files
+		
+		<span style="color: #008800; font-weight: bold">NATURAL</span> <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> (
+			<span style="color: #008800; font-weight: bold">SELECT</span> us_user, <span style="color: #0066BB; font-weight: bold">COUNT</span>(us_user) <span style="color: #008800; font-weight: bold">AS</span> n_folders <span style="color: #008800; font-weight: bold">FROM</span> packs_users <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> us_user
+		) <span style="color: #008800; font-weight: bold">as</span> T_folders
+		
+	<span style="color: #008800; font-weight: bold">WHERE</span> users.us_user<span style="color: #333333">&gt;</span><span style="color: #0000DD; font-weight: bold">20</span> <span style="color: #008800; font-weight: bold">AND</span> users.us_user <span style="color: #008800; font-weight: bold">NOT</span> <span style="color: #008800; font-weight: bold">BETWEEN</span> <span style="color: #0000DD; font-weight: bold">500000</span> <span style="color: #008800; font-weight: bold">AND</span> <span style="color: #0000DD; font-weight: bold">500020</span> <span style="color: #008800; font-weight: bold">AND</span> users.us_user <span style="color: #008800; font-weight: bold">NOT</span> <span style="color: #008800; font-weight: bold">BETWEEN</span> <span style="color: #0000DD; font-weight: bold">1000000</span> <span style="color: #008800; font-weight: bold">AND</span> <span style="color: #0000DD; font-weight: bold">1000020</span>
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<span style="color: #008800; font-weight: bold">DROP</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #008800; font-weight: bold">IF</span> <span style="color: #008800; font-weight: bold">EXISTS</span> V_all_activities_users;
+<span style="color: #008800; font-weight: bold">CREATE</span> <span style="color: #008800; font-weight: bold">TABLE</span> V_all_activities_users <span style="color: #008800; font-weight: bold">AS</span> (
+	<span style="color: #008800; font-weight: bold">SELECT</span> t1.ac_activity, activity_school_year, start_year, t2.us_user <span style="color: #008800; font-weight: bold">FROM</span> <span style="color: #AA6600">`activities_users_school_year`</span> <span style="color: #008800; font-weight: bold">AS</span> t1 <span style="color: #008800; font-weight: bold">LEFT</span> <span style="color: #008800; font-weight: bold">JOIN</span> (<span style="color: #008800; font-weight: bold">SELECT</span> <span style="color: #333333">*</span> <span style="color: #008800; font-weight: bold">FROM</span> reflections <span style="color: #008800; font-weight: bold">GROUP</span> <span style="color: #008800; font-weight: bold">BY</span> ac_activity,us_user) <span style="color: #008800; font-weight: bold">AS</span> t2 <span style="color: #008800; font-weight: bold">ON</span> t1.ac_activity <span style="color: #333333">=</span> t2.ac_activity
+);
+<span style="color: #008800; font-weight: bold">ALTER</span> <span style="color: #008800; font-weight: bold">TABLE</span> <span style="color: #AA6600">`V_all_activities_users`</span> <span style="color: #008800; font-weight: bold">ADD</span> <span style="color: #008800; font-weight: bold">PRIMARY</span> <span style="color: #008800; font-weight: bold">KEY</span>( <span style="color: #AA6600">`ac_activity`</span>, <span style="color: #AA6600">`us_user`</span>);
+
+<span style="color: #008800; font-weight: bold">UPDATE</span> V_all_activities_users b, activities_users_school_year p
+   <span style="color: #333399; font-weight: bold">SET</span> b.us_user <span style="color: #333333">=</span> p.us_user
+ <span style="color: #008800; font-weight: bold">WHERE</span> b.ac_activity <span style="color: #333333">=</span> p.ac_activity
+   <span style="color: #008800; font-weight: bold">AND</span> b.us_user <span style="color: #008800; font-weight: bold">IS</span> <span style="color: #003366; font-weight: bold">NULL</span>;
+</pre></td></tr></table></div>
