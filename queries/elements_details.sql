@@ -137,7 +137,7 @@ CREATE TABLE V_activities_info AS (
 			ac_atSchool, ac_atInteraziendale, (1-ac_atSchool-ac_atInteraziendale) AS ac_atCompany, 
 			len_steps, avg_step_len, STD(len_step) AS std_step_len, n_steps,
 			au_evaluation AS user_evaluation, 
-			creation_date, MONTH(creation_date) AS creation_month, YEAR(creation_date) AS creation_year, 
+			creation_date, MONTH(creation_date) AS creation_month, YEAR(creation_date) AS creation_year, creation_school_year, 
 			last_edit_date, MONTH(last_edit_date) AS last_edit_month, YEAR(last_edit_date) AS last_edit_year, 
 			DATEDIFF(last_edit_date,creation_date) AS edit_period,
 			avg_specific_evaluations, avg_reflection_length, STD(len_reflection) AS std_reflection_length, in_curriculum,
@@ -145,6 +145,15 @@ CREATE TABLE V_activities_info AS (
 			(len_description+len_steps+len_description) AS activity_total_length,
 			n_edits, n_images
 	FROM activities_users_school_year NATURAL JOIN `activities` NATURAL LEFT JOIN activities_versions NATURAL LEFT JOIN activities_users
+	
+		NATURAL LEFT JOIN(
+			SELECT ac_activity,
+				(CASE 
+					WHEN MONTH(ac_date) < '8' THEN YEAR(ac_date)-1
+					ELSE YEAR(ac_date)
+				END) AS creation_school_year
+			FROM activities
+		) AS T_creation_school_year
 
 		NATURAL LEFT JOIN V_activities_word_count
 
@@ -330,7 +339,7 @@ CREATE TABLE V_user_info AS (
 		n_in_curriculum_semester3,n_in_curriculum_semester4,n_in_curriculum_semester5,
 		n_feedback_requests,n_received_feedback_responses,n_received_feedback_requests,n_feedback_responses,
 		avg_activity_evaluations, avg_reflection_length, avg_specific_evaluations, avg_supervisor_evaluation,
-		n_files,n_folders, us_canton
+		n_files,n_folders, n_logins, us_canton
 	FROM `users` 
 	
 		NATURAL JOIN users_start_semester
@@ -348,7 +357,7 @@ CREATE TABLE V_user_info AS (
 		) AS T_companies
 		
 		NATURAL LEFT JOIN (
-			SELECT us_user, COUNT(*) as total_logins FROM LOG_logins GROUP BY us_user
+			SELECT us_user, COUNT(*) as n_logins FROM LOG_logins GROUP BY us_user
 		) AS T_logins
 		
 		NATURAL LEFT JOIN(

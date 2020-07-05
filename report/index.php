@@ -16,6 +16,11 @@
         <link href="css/styles.css" rel="stylesheet" />
         <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
         <script src="assets/js/plotly.min.js"></script>
+
+        <?php
+        $data_info = parse_ini_file("data_info.ini");
+        ?>
+
     </head>
     <body id="page-top">
         <!-- Navigation-->
@@ -46,9 +51,9 @@
             </div>
         </header>
         <!-- Projects-->
-        <section class="projects-section bg-light" id="projects">
+        <section class="extraction-section bg-light" id="extractions">
             <div class="container">
-
+                <div class="spacer h100"></div>
                 <div class="row justify-content-md-center mb-4 mb-lg-5">
                     <div class="col-xl-10 col-lg-10 ">
                         <div class="spacer h30"></div>
@@ -84,9 +89,9 @@
                                 Moreover, based on the information we have, some users have also been associated with their school grades, those during the year and those of the final exams.
                             </p>
                             <p class="text-justify text-black-50 mt-5">
-                                <kbd>Note:</kbd> the following databases are taken into account.
+                                <kbd>Note:</kbd> the following databases have been taken into account.
                             </p>
-                            <ul>
+                            <ul class="text-left">
                                 <li class="text-black-50">CPT Ticino (<a href="https://cpt.lldweb.ch" target="_blank">link</a>)</li>
                                 <li class="text-black-50">CPT Ticino old platform (<a href="http://lld.iuffp-svizzera1.ch" target="_blank">link</a>)</li>
                                 <li class="text-black-50">CFP Genève (<a href="http://fr.lld.iuffp-svizzera1.ch" target="_blank">link</a>)</li>
@@ -94,9 +99,55 @@
                         </div>
                     </div>
                 </div>
+                <div class="spacer0"></div>
 
             </div>
 
+        </section>
+
+
+        <section class="cleaning-section bg-light" id="cleaning">
+            <div class="container">
+
+                <div class="row justify-content-md-center mb-4 mb-lg-5">
+                    <div class="col-xl-10 col-lg-10 ">
+                        <div class="spacer h30"></div>
+                        <div class="text-left text-lg-left">
+                            <h1>Data Cleaning</h1>
+                            <hr/>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4 class="text-black-50">Users</h4>
+                                    <p class="text-black-50">
+                                        The following criteria have been applied before the analysis to clean users:
+                                    </p>
+                                    <ul>
+                                        <li>
+                                            Students with 0 activities (<?= $data_info['no_activities_students'] ?> removed).
+                                        </li>
+                                        <li>
+                                            Users with less than 5 login in total (<?= $data_info['low_logins'] ?> removed).
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="text-black-50">Activities</h4>
+                                    <p class="text-black-50">
+                                        The following criteria have been applied before the analysis to clean activities:
+                                    </p>
+                                    <ul>
+                                        <li>
+                                            Activities with total length = 0 (<?= $data_info['activities_0_length'] ?> removed)
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="spacer h10"></div>
+
+            </div>
         </section>
 
 
@@ -108,40 +159,56 @@
                         <div class="spacer h30"></div>
                         <div class="text-center text-lg-left">
                             <h1>Data Exploration</h1>
-                            <hr/>
-                            <h4 class="text-black-50">Activities</h4>
-                            <p class="text-justify text-black-50">
-                                Database extraction can be found at
-                                <a href="notebooks/mysql_extractions.html" target="_blank">this jupyter notebook</a>
-                                where you can download all the queries used to obtain the raw data.
-                                In addition below a simplified database schema is represented.
+                            <p class="">
+                                The extracted data concern the school years from <strong><?= $data_info['year_from'] ?></strong> to <strong><?= $data_info['year_to'] ?></strong>
                             </p>
-                            <p class="text-justify text-black-50">
-                                At the center of this scheme are the <code>users</code>.
-                                Each user has their own information and is linked to <span class="font-italic">classes</span> and <span class="font-italic">companies</span>.
-                                Each user can have multiple recipes or experiences (<code>activities</code>).
-                                Each activity consists of its own information and various <u>steps</u> or <u>images</u> (files).
-                                The activity can be <u>classified</u> or used to create a <code>reflection</code>.
-                                The reflection is personal to the user who created the activity,
-                                but his or her supervisor can give it an extra reflection, and this is called <code>feedback</code>.
-                                Users can be of various types including <span class="font-italic">students</span>, <span class="font-italic">supervisors</span> (bosses), <span class="font-italic">teachers</span>.
-                            </p>
-                            <p class="text-justify text-black-50">
-                                A preprocess-phase is needed.
-                                In <a href="notebooks/users_preprocess.html" target="_blank">this notebook</a>
-                                you can see how users were cleaned from duplicates, identified by gender, one-hotted the user type and filled some <span class="font-italic">NaN</span> values. Tha same with <a href="/notebooks/activities_preprocess.html" target="_blank">the activities</a>.
-                            </p>
-                            <p class="text-justify text-black-50">
-                                Moreover, based on the information we have, some users have also been associated with their school grades, those during the year and those of the final exams.
-                            </p>
-                            <p class="text-justify text-black-50 mt-5">
-                                <kbd>Note:</kbd> the following databases are taken into account.
-                            </p>
-                            <ul>
-                                <li class="text-black-50">CPT Ticino (<a href="https://cpt.lldweb.ch" target="_blank">link</a>)</li>
-                                <li class="text-black-50">CPT Ticino old platform (<a href="http://lld.iuffp-svizzera1.ch" target="_blank">link</a>)</li>
-                                <li class="text-black-50">CFP Genève (<a href="http://fr.lld.iuffp-svizzera1.ch" target="_blank">link</a>)</li>
-                            </ul>
+                            <hr class="mb-4"/>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4 class="text-left text-black-50">Users</h4>
+                                    <p class="text-justify text-black-50">
+                                        In total there are <code><strong><?= number_format($data_info['n_users']) ?></strong> users</code> : <br/>
+                                    </p>
+                                    <ul class="text-left">
+                                        <li>
+                                            The type is divided in <code><?= number_format($data_info['n_students']) ?></code> students, <code><?= number_format($data_info['n_supervisors']) ?></code> supervisors, <code><?= number_format($data_info['n_teachers']) ?></code> teachers and <?= number_format($data_info['n_others_u']) ?> other.
+                                        </li>
+                                        <li>
+                                            The gender is divided in <code><?= number_format($data_info['n_males']) ?></code> males and <code><?= number_format($data_info['n_females']) ?></code> females and <?= number_format($data_info['n_unknown']) ?> unknown.
+                                        </li>
+                                        <li>
+                                            <code><?= number_format($data_info['users_from_ti']) ?></code> from canton <u>TI</u> and <code><?= number_format($data_info['users_from_ge']) ?></code> from canton <u>GE</u>.
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4 class="text-black-50 text-left">Activities</h4>
+                                    <p class="text-justify text-black-50">
+                                        In total there are <code><strong><?= number_format($data_info['n_activities']) ?></strong> activities</code> : <br/>
+                                    </p>
+                                    <ul class="text-left">
+                                        <li>
+                                            <code><?= number_format($data_info['n_recipes']) ?></code> recipes and <code><?= number_format($data_info['n_experiences']) ?></code> experiences.
+                                        </li>
+                                        <li>
+                                            <code><?= number_format($data_info['activities_from_ti']) ?></code> from canton <u>TI</u> and <code><?= number_format($data_info['activities_from_ge']) ?></code> from canton <u>GE</u>.
+                                        </li>
+                                        <li>
+                                            <?= number_format($data_info['activities_with_feedback_requests']) ?>
+                                            (<code><?= number_format($data_info['activities_with_feedback_requests']/$data_info['n_activities']*100) ?>%</code> )
+                                            with feedback request of which
+                                            <code><?= number_format($data_info['activities_with_feedback_responses']/$data_info['activities_with_feedback_requests']*100) ?>%</code>
+                                            received a responses.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <hr class="mb-4"/>
+                            <h4 class="text-black-50 text-left">Activities</h4>
+                            <p>asd</p>
+
+                            <div class="spacer h500"></div>
+
                         </div>
                     </div>
                 </div>

@@ -80,9 +80,13 @@ class Users:
     def id_correction(self,df,id_column = 'us_user'):
         return df.replace({id_column:self.correct_map})
 
-    def solve_gender(self):
+    def solve_gender(self,cache_file = "cache_gender.csv"):
         detector = gender.Detector(case_sensitive=False)
-        self.df['gender'] = self.df['user_name'].apply(recognize_gender, detector=detector)
+        try:
+            cache_df = pd.read_csv(cache_file)
+        except:
+            cache_df = None
+        self.df['gender'] = self.df['user_name'].apply(recognize_gender, detector=detector, cache_df = cache_df)
 
 class Activities:
     df = None
@@ -235,8 +239,18 @@ class Genderize:
 # names that are different wrt English
 male_diff_names = ["Andrea", "Daniele"]
 
-def recognize_gender(full_name, detector, weight=None):
+def recognize_gender(full_name, detector, weight=None, cache_df = None):
     logging.info(f"Recognizing gender for {full_name}: ")
+
+    if cache_df is not None:
+        try:
+            cache_gender = cache_df.query(f'user_name == "{full_name}"')['gender']
+            if len(cache_gender):
+                cache_result = cache_gender.values[0]
+                logging.info(f"\tfound in cache: {cache_result}")
+                return cache_result
+        except:
+            logging.debug("Name not found in cache.")
 
     # because we are not sure about the name & last name
     male_pts = 0
@@ -278,3 +292,30 @@ def recognize_gender(full_name, detector, weight=None):
             return recognize_gender(full_name, Genderize())
 
     return np.nan
+
+from configparser import ConfigParser
+
+class InfoParser:
+    info_section = ""
+    file_path = ""
+    config_object = None
+    data_info = dict()
+
+    def __init__(self,file_path,info_section = "DATA_INFO"):
+        self.info_section = info_section
+        self.file_path = file_path
+
+        # Read ini file
+        self.config_object = ConfigParser()
+        self.config_object.read(file_path)
+
+        # Get the DATA_INFO section
+        self.data_info = self.config_object["DATA_INFO"]
+
+    def info(self,key,value):
+        self.data_info[key] = str(value)
+        self.save_file()
+
+    def save_file(self):
+        with open(self.file_path, 'w') as conf:
+            self.config_object.write(conf)
