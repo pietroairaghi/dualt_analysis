@@ -10,12 +10,17 @@ import requests, json
 
 import gender_guesser.detector as gender
 
+import pickle
+
 
 class Users:
     df = None
     df_raw = None
     
-    def __init__(self, path = None, df = None):
+    def __init__(self):
+        df = None
+
+    def load_df(self, path = None, df = None):
         if path:
             self.df = pd.read_csv(path)
         elif df:
@@ -77,6 +82,14 @@ class Users:
 
         self.correct_map = correct_map
 
+    def load_correct_map(self,map_file_pickle):
+        # Getting back the objects:
+        with open(map_file_pickle,'rb') as f:
+            self.correct_map = pickle.load(f)
+
+    def correct_users(self,users):
+        return users.replace(self.correct_map)
+
     def id_correction(self,df,id_column = 'us_user'):
         return df.replace({id_column:self.correct_map})
 
@@ -94,7 +107,10 @@ class Activities:
     month_order = None
     month_map   = None
 
-    def __init__(self, path):
+    def __init__(self):
+        self.df = None
+
+    def load_df(self,path):
         self.df = pd.read_csv(path)
 
         self.df['creation_date'] = pd.to_datetime(self.df['creation_date'])
@@ -102,6 +118,10 @@ class Activities:
 
     def save_raw(self):
         self.df_raw = self.df.copy()
+
+    def load_map_month(self,month_map,month_order):
+        self.month_order = month_order
+        self.month_map = month_map
 
     def map_month(self,month_map,month_order):
         self.month_order = month_order

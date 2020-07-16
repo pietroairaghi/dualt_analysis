@@ -203,11 +203,145 @@
                                     </ul>
                                 </div>
                             </div>
-                            <hr class="mb-4"/>
-                            <h4 class="text-black-50 text-left">Activities</h4>
-                            <p>asd</p>
+                        </div>
 
-                            <div class="spacer h500"></div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <hr class="mb-4"/>
+                                <h4 class="text-left">Activities</h4>
+                                <p>asd</p>
+                            </div>
+
+                            <div class="col-md-12">
+                                <?php include("results/activities_per_vintage.html") ?>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <?php include("results/activities_per_vintage_school_year.html") ?>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <nav>
+                                    <div class="nav nav-tabs" role="tablist">
+                                        <a class="nav-item nav-link active" data-toggle="tab" href="#nav-act-user-year" role="tab">
+                                            Year
+                                        </a>
+                                        <a class="nav-item nav-link" data-toggle="tab" href="#nav-act-user-vintage" role="tab">
+                                            Vintage
+                                        </a>
+                                    </div>
+                                </nav>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="nav-act-user-year" role="tabpanel">
+                                        <?php include("results/activities_per_user_per_year.html") ?>
+                                    </div>
+                                    <div class="tab-pane fade active not-real-active" id="nav-act-user-vintage" role="tabpanel">
+                                        <?php include("results/activities_per_user_per_vintage.html") ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <nav>
+                                    <div class="nav nav-tabs" role="tablist">
+                                        <a class="nav-item nav-link active" data-toggle="tab" href="#nav-act-month" role="tab">
+                                            Overall
+                                        </a>
+                                        <a class="nav-item nav-link" data-toggle="tab" href="#nav-act-month-ti" role="tab">
+                                            Details TICINO
+                                        </a>
+                                        <a class="nav-item nav-link" data-toggle="tab" href="#nav-act-month-ge" role="tab">
+                                            Details GENÈVE
+                                        </a>
+                                    </div>
+                                </nav>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="nav-act-month" role="tabpanel">
+                                        <?php include("results/activities_per_month.html") ?>
+                                    </div>
+                                    <div class="tab-pane fade active not-real-active" id="nav-act-month-ti" role="tabpanel">
+                                        <?php include("results/activities_per_month_per_vintage_TI.html") ?>
+                                    </div>
+                                    <div class="tab-pane fade active not-real-active" id="nav-act-month-ge" role="tabpanel">
+                                        <?php include("results/activities_per_month_per_vintage_GE.html") ?>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <nav>
+                                    <div class="nav nav-tabs" role="tablist">
+                                        <a class="nav-item nav-link active" data-toggle="tab" href="#nav-act-lenght" role="tab">
+                                            Distribution
+                                        </a>
+                                        <a class="nav-item nav-link" data-toggle="tab" href="#nav-act-lenght-creation" role="tab">
+                                            Creation school year
+                                        </a>
+                                        <a class="nav-item nav-link" data-toggle="tab" href="#nav-act-lenght-vintage" role="tab">
+                                            Vintage
+                                        </a>
+                                    </div>
+                                </nav>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="nav-act-lenght" role="tabpanel">
+                                        <?php include("results/ativities_total_length_distr.html") ?>
+                                    </div>
+                                    <div class="tab-pane fade active not-real-active" id="nav-act-lenght-creation" role="tabpanel">
+                                        <?php include("results/activities_total_length_creation_year.html") ?>
+                                    </div>
+                                    <div class="tab-pane fade active not-real-active" id="nav-act-lenght-vintage" role="tabpanel">
+                                        <?php include("results/activities_total_length_start_year.html") ?>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <hr class="mb-4"/>
+                                <h4 class="text-left">Feedbacks</h4>
+                                <p>asd</p>
+                            </div>
+
+                            <div class="col-md-12">
+                                <?php include("results/feedbacks_requests_and_responses_per_year_per_canton.html") ?>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <?php include("results/feedbacks_requests_and_responses_per_month_per_school_year.html") ?>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <?php include("results/requests_per_users_distr.html") ?>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <?php include("results/feedbacks_per_response_year_per_supervisor.html") ?>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <?php include("results/feedbacks_per_request_year_per_student.html") ?>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <?php include("results/feedbacks_ratio_per_each_supervisor.html") ?>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="spacer h50"></div>
+                                <?php include("results/feedbacks_ratio_per_activity_school_year_per_month.html") ?>
+                            </div>
+
+
+
+
 
                         </div>
                     </div>
@@ -216,55 +350,6 @@
 
                 <!-- Featured Project Row-->
                 <div class="row align-items-center no-gutters mb-4 mb-lg-5">
-                    <div class="col-xl-6 col-lg-6 col-sm-12">
-                        <?php include("results/users_type_gender_TI.html") ?>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-sm-12">
-                        <?php include("results/users_type_gender_GE.html") ?>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-sm-12">
-                        <?php include("results/activities_type_TI.html") ?>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-sm-12">
-                        <?php include("results/activities_type_GE.html") ?>
-                    </div>
-
-                    <div class="col-xl-6 col-lg-6 col-sm-12">
-                        <?php include("results/users_type_gender.html") ?>
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-sm-12">
-                        <?php include("results/activities_type.html") ?>
-                    </div>
-
-                    <div class="col-xl-8 col-lg-7">
-                        <ul class="nav nav-tabs mb-3" id="pills-tab" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link active" id="pills-home-tab" data-toggle="pill" href="#pills-home" role="tab" aria-controls="pills-home" aria-selected="true">Home</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab" aria-controls="pills-profile" aria-selected="false">Profile</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="pills-contact-tab" data-toggle="pill" href="#pills-contact" role="tab" aria-controls="pills-contact" aria-selected="false">Contact</a>
-                            </li>
-                        </ul>
-                        <div class="tab-content" id="pills-tabContent">
-                            <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
-                                <?php include("results/users_type_gender.html") ?>
-                            </div>
-                            <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
-                                <?php include("results/activities_type.html") ?>
-                            </div>
-                            <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">...</div>
-                        </div>
-                    </div>
-                    <div class="col-xl-4 col-lg-5">
-                        <div class="featured-text text-center text-lg-left">
-                            <h4>Shoreline</h4>
-                            <p class="text-black-50 mb-0">Grayscale is <a class="asd" href="javascript:void(0);">open</a> source and MIT licensed. This means you can use it for any project - even commercial projects! Download it, customize it, and publish your website!</p>
-                        </div>
-                    </div>
-                </div>
                 <!-- Project One Row-->
                 <div class="row justify-content-center no-gutters mb-5 mb-lg-0">
                     <div class="col-lg-6"><img class="img-fluid" src="assets/img/demo-image-01.jpg" alt="" /></div>
@@ -366,6 +451,10 @@
         <script src="js/scripts.js"></script>
         <script>
 
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
             var plotly_config = {"responsive": true,
                 modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", "autoScale2d", "resetScale2d", "hoverClosestCartesian", "hoverCompareCartesian", "zoom3d", "pan3d", "resetCameraDefault3d", "resetCameraLastSave3d", "hoverClosest3d", "orbitRotation", "tableRotation", "zoomInGeo", "zoomOutGeo", "resetGeo", "hoverClosestGeo", "sendDataToCloud", "hoverClosestGl2d", "hoverClosestPie", "toggleHover", "resetViews", "toggleSpikelines", "resetViewMapbox"],
                 modeBarButtonsToAdd: [{
@@ -377,6 +466,23 @@
             }],
                 displaylogo: false
             }
+
+            $(".nav-link").click(async function(){
+                return true;
+                $(".tab-pane .plotly-graph-div").each(async function(){
+                    await sleep(100);
+                    Plotly.Plots.resize(this.id);
+                    var update = {
+                        width: "926",
+                        height: " "
+                    };
+                    // Plotly.relayout(this.id,update)
+                });
+            });
+
+            $(".not-real-active").each(function(){
+                $(this).removeClass("active");
+            });
 
 
         </script>
